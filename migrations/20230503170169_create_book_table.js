@@ -7,7 +7,7 @@ exports.up = function (knex) {
     table.uuid("id").primary();
     table.string("name").notNullable();
     table.string("description").notNullable();
-    table.string("genre").references("genre.name");
+    table.integer("genre").unsigned().references("genre.genre_id");
     table.integer("total_pages").unsigned().notNullable();
     table.string("author").notNullable();
     table
@@ -16,7 +16,7 @@ exports.up = function (knex) {
       .nullable();
     table
       .string("purchase_link")
-      .defaultTo("https://via.placeholder.com/600x400.png?text=+")
+      .defaultTo("#")
       .nullable();
     table.timestamps(true, true);
   });

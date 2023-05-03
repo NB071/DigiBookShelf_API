@@ -17,12 +17,12 @@ exports.up = function (knex) {
       .nullable();
     table.integer("goal_set").nullable();
     table
-      .string("favorite_genre")
-      .defaultTo("None")
-      .nullable()
-      .references("genre.name")
+      .integer("favorite_genre")
+      .unsigned()
+      .references("genre.genre_id")
       .onUpdate("CASCADE")
-      .onDelete("CASCADE");
+      .onDelete("CASCADE")
+      .defaultTo(0);
     table.timestamp("join_date").defaultTo(knex.fn.now());
   });
 };
