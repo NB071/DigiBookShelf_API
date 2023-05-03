@@ -1,0 +1,31 @@
+{
+  "name": "digi_bookshelf_api",
+  "version": "1.0.0",
+  "description": "api for digi book shelf project",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "migrate": "knex migrate:latest",
+    "rollback": "knex migrate:rollback",
+    "seed": "knex seed:run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NB071/DigiBookShelf_API.git"
+  },
+  "author": "Nima Bargestan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NB071/DigiBookShelf_API/issues"
+  },
+  "homepage": "https://github.com/NB071/DigiBookShelf_API#readme",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "knex": "^2.4.2",
+    "nodemon": "^2.0.22",
+    "uuid": "^9.0.0"
+  }
+}
