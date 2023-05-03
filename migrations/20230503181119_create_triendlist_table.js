@@ -4,8 +4,11 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable("friend_list", (table) => {
-    table.increments("id");
-    table.uuid("user_id").references("user.id");
+    table
+      .uuid("user_id")
+      .references("user.user_id")
+      .onUpdate("CASCADE")
+      .onDelete("CASCADE");
     table.json("friends").defaultTo({});
   });
 };

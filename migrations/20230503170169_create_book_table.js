@@ -7,11 +7,7 @@ exports.up = function (knex) {
     table.uuid("id").primary();
     table.string("name").notNullable();
     table.string("description").notNullable();
-    table
-      .string("genre")
-      .defaultTo("No genre")
-      .references("genre.name")
-      .notNullable();
+    table.string("genre").references("genre.name");
     table.integer("total_pages").unsigned().notNullable();
     table.string("author").notNullable();
     table

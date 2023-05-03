@@ -4,7 +4,7 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable("user", (table) => {
-    table.uuid("id").primary();
+    table.uuid("user_id").primary();
     table.uuid("shelf_id").primary().index();
     table.string("first_name", 100).notNullable();
     table.string("last_name", 100).notNullable();
@@ -18,9 +18,11 @@ exports.up = function (knex) {
     table.integer("goal_set").nullable();
     table
       .string("favorite_genre")
+      .defaultTo("None")
       .nullable()
       .references("genre.name")
-      .onUpdate("CASCADE");
+      .onUpdate("CASCADE")
+      .onDelete("CASCADE");
     table.timestamp("join_date").defaultTo(knex.fn.now());
   });
 };
