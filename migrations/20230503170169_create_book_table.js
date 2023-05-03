@@ -11,6 +11,10 @@ exports.up = function (knex) {
     table.integer("total_pages").unsigned().notNullable();
     table.string("author").notNullable();
     table
+      .boolean("is_NYT_best_seller")
+      .defaultTo("0")
+      .nullable();
+    table
       .string("cover_image")
       .defaultTo("https://via.placeholder.com/600x400.png?text=+")
       .nullable();
