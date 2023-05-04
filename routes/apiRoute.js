@@ -9,4 +9,7 @@ router.post("/register", apiController.register);
 // GET: NYT top seller
 router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 
+// GET: singe book info
+router.get("/books/:bookId", authorize, apiController.fechSingeBook);
+
 module.exports = router;

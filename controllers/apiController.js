@@ -32,7 +32,7 @@ module.exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { username: user.username },
+      { username: user.username, user_id: user.user_id},
       process.env.JWT_SIGN_KEY,
       { expiresIn: "1h" }
     );
@@ -122,5 +122,17 @@ module.exports.register = async (req, res) => {
 module.exports.nytBooks = async (req, res) => {
   const books =  await db('book').where({is_NYT_best_seller: 1})
   res.send(books);
+  
+}
+
+
+module.exports.fechSingeBook = async (req, res) => {
+  const {bookId} = req.params
+  const books =  await db('book').where({id: bookId}).first()
+  if (!books) {
+    return res.status(404).json({ error: "Book not found" });
+  }
+  res.status(200).json(books);
+
   
 }
