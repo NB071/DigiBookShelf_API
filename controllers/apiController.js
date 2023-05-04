@@ -5,6 +5,7 @@ const db = knex(knexConfig);
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
+const { Module } = require("module");
 
 //////////////////////////////////
 require("dotenv").config();
@@ -117,3 +118,9 @@ module.exports.register = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+module.exports.nytBooks = async (req, res) => {
+  const books =  await db('book').where({is_NYT_best_seller: 1})
+  res.send(books);
+  
+}
