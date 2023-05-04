@@ -30,7 +30,7 @@ async function fetchWeeklyTopSellerNYT() {
         rank: item.rank,
         name: item.title.toLowerCase(),
         description: item.description.toLowerCase(),
-        genre: genre,
+        genre: genre.toLowerCase(),
         total_pages: pageCount,
         author: item.author.toLowerCase(),
         cover_image: item.book_image,

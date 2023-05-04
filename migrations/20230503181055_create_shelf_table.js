@@ -20,10 +20,9 @@ exports.up = function (knex) {
       .references("book.id")
       .onUpdate("CASCADE")
       .onDelete("CASCADE");
-    table.timestamp("add_date").defaultTo(knex.fn.now());
-    table.boolean("is_pending").nullable();
-    table.string("read_pages").nullable();
-    table.boolean("is_completed").nullable();
+      table.timestamp("add_date").defaultTo(knex.fn.now());
+      table.string("read_pages").defaultTo('0').nullable();
+    table.boolean("is_pending").defaultTo('1')
   });
 };
 
