@@ -12,4 +12,7 @@ router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
+// USER routes
+router.route('/user/books').get(apiController.fetchShelfBook)
+
 module.exports = router;

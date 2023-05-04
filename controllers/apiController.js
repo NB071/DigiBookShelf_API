@@ -32,7 +32,7 @@ module.exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { username: user.username, user_id: user.user_id},
+      { username: user.username, user_id: user.user_id },
       process.env.JWT_SIGN_KEY,
       { expiresIn: "1h" }
     );
@@ -120,19 +120,43 @@ module.exports.register = async (req, res) => {
 };
 
 module.exports.nytBooks = async (req, res) => {
-  const books =  await db('book').where({is_NYT_best_seller: 1})
+  const books = await db("book").where({ is_NYT_best_seller: 1 });
   res.send(books);
-  
-}
-
+};
 
 module.exports.fechSingeBook = async (req, res) => {
-  const {bookId} = req.params
-  const books =  await db('book').where({id: bookId}).first()
+  const { bookId } = req.params;
+  const books = await db("book").where({ id: bookId }).first();
   if (!books) {
     return res.status(404).json({ error: "Book not found" });
   }
   res.status(200).json(books);
+};
 
-  
-}
+// USER: Get shelf books
+module.exports.fetchShelfBook = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+    let query = db("shelf").where({ user_id: userId });
+
+    // search query filter
+    if (
+      req.query.pending !== undefined &&
+      (req.query.pending === "0" || req.query.pending === "1")
+    ) {
+      query = query.where({ is_pending: req.query.pending });
+    }
+
+    if (req.query.recent !== undefined) {
+      const book = await query.orderBy("add_date", "desc").first();
+      res.send(book);
+    } else {
+      const books = await query.orderBy("add_date", "desc");
+      res.send(books);
+    }
+  } catch (err) {
+    return res.status(401).json(err);
+  }
+};
