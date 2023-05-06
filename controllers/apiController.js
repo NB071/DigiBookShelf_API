@@ -5,15 +5,19 @@ const db = knex(knexConfig);
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
-const { Module } = require("module");
+const { Configuration, OpenAIApi } = require("openai");
 
 //////////////////////////////////
 require("dotenv").config();
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 //////////////////////////////////
 
 module.exports.login = async (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return res.send(400).json({ error: "Missing fields" });
+    return res.status(400).json({ error: "Missing fields" });
   }
 
   const { email, password } = req.body;
@@ -22,17 +26,23 @@ module.exports.login = async (req, res) => {
     const user = await db("user").where({ email }).first();
 
     if (!user) {
-      return res.status(401).json({ error: "Incorrect username or password" });
+      return res.status(401).json({ error: "Incorrect email or password" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Incorrect username or password" });
+      console.log(user);
+
+      return res.status(401).json({ error: "Incorrect email or password" });
     }
 
     const token = jwt.sign(
-      { username: user.username, user_id: user.user_id },
+      {
+        username: user.username,
+        user_id: user.user_id,
+        shelf_id: user.shelf_id,
+      },
       process.env.JWT_SIGN_KEY,
       { expiresIn: "1h" }
     );
@@ -63,7 +73,6 @@ module.exports.register = async (req, res) => {
     last_name,
     avatar_image,
     goal_set,
-    favorite_genre,
   } = req.body;
 
   // check for email format
@@ -80,38 +89,42 @@ module.exports.register = async (req, res) => {
   }
 
   try {
-    const user = await db("user").where({ username }).first();
+    const usernameCheck = await db("user").where({ username }).first();
+    const emailCheck = await db("user").where({ email }).first();
 
     // if user exists in database
-    if (user) {
+    if (usernameCheck) {
       return res.status(409).json({ error: "Username already exists" });
     }
-
+    if (emailCheck) {
+      return res.status(409).json({ error: "Email already exists" });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    const userId = v4();
     // add the user to the database
-    const addedUser = await db("user")
-      .insert({
-        user_id: v4(),
-        shelf_id: v4(),
-        first_name,
-        last_name,
-        username,
-        email,
-        password: hashedPassword,
-        avatar_image: avatar_image || undefined,
-        goal_set: goal_set || undefined,
-        favorite_genre: favorite_genre || undefined,
-      })
-      .returning("username");
+    await db("user").insert({
+      user_id: userId,
+      shelf_id: v4(),
+      first_name,
+      last_name,
+      username,
+      email,
+      password: hashedPassword,
+      avatar_image: avatar_image || undefined,
+      goal_set: goal_set || undefined,
+    });
+    // get the new user id and username for jwt
+    const newUser = await db("user").where({ user_id: userId }).first();
 
-    // generate the JWT
     const token = jwt.sign(
-      { username: addedUser.username, user_id: addedUser.user_id },
+      {
+        username: newUser.username,
+        user_id: newUser.user_id,
+        shelf_id: newUser.shelf_id,
+      },
       process.env.JWT_SIGN_KEY,
       { expiresIn: "24h" }
     );
-
     res.send({ token });
   } catch (err) {
     console.log(err);
@@ -158,5 +171,131 @@ module.exports.fetchShelfBook = async (req, res) => {
     }
   } catch (err) {
     return res.status(401).json(err);
+  }
+};
+
+// USER: get recommendation based on user's genre
+
+module.exports.recommendBook = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // extract users fav genre
+    let query = await db("shelf")
+      .select("book.id as book_id", "book.genre")
+      .join("book", "shelf.book", "=", "book.id")
+      .where({ shelf_id: shelfId });
+
+    const genresObj = query.reduce((genreCount, book) => {
+      const { genre } = book;
+      genreCount[genre] = (genreCount[genre] || 0) + 1;
+      return genreCount;
+    }, {});
+    const favGenre = Object.entries(genresObj).reduce(
+      (favGenre, [genre, count]) => {
+        if (count > favGenre.count) {
+          favGenre.genre = genre;
+          favGenre.count = count;
+        }
+        return favGenre;
+      },
+      { genre: null, count: 0 }
+    );
+    // use AI to find 5 books with user's favorite genre
+    const completion = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Response with json format (in []) recommending 5 books in ${favGenre.genre} genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}`,
+      max_tokens: 2000,
+    });
+
+    res.send(completion.data.choices[0].text);
+  } catch (err) {
+    console.log(err.response.data.error);
+    res.send(500).json({ error: "Try again" });
+  }
+};
+
+// USER: get all users info
+module.exports.fetchAllUserData = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+
+    // extract users fav genre
+    const query_user = await db("user")
+      .select(
+        "first_name",
+        "last_name",
+        "username",
+        "email",
+        "avatar_image",
+        "goal_set",
+        "favorite_genre"
+      )
+      .where({ user_id: userId })
+      .first();
+    const query_friends = await db("friend_list")
+      .select("friend")
+      .where({ user_id: userId });
+    console.log(query_friends);
+    res.send({ ...query_user, friends: Array.from(query_friends) });
+  } catch (err) {
+    console.log(err);
+    res.send(500).json({ error: "Try again" });
+  }
+};
+
+module.exports.addUserBook = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+    const userId = decoded.user_id;
+
+    // get books info
+    if (
+      !req.body.book_name ||
+      !req.body.book_description ||
+      !req.body.book_genre ||
+      !req.body.book_author ||
+      !req.body.total_pages ||
+      !req.body.cover_image
+    ) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+    const {
+      book_name: name,
+      book_description: description,
+      book_genre: genre,
+      book_author: author,
+      total_pages,
+      read_pages,
+      cover_image,
+    } = req.body;
+    const bookId = v4();
+    await db("book").insert({
+      id: bookId,
+      name,
+      description,
+      genre,
+      author,
+      total_pages,
+      cover_image,
+      is_NYT_best_seller: 0
+    });
+    await db("shelf").insert({
+      user_id: userId,
+      shelf_id: shelfId,
+      book: bookId,
+      read_pages: read_pages ? read_pages : undefined,
+      is_pending: read_pages === total_pages ? 0 : 1,
+    });
+    res.json({sucess: "book added"});
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
   }
 };

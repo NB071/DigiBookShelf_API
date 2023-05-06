@@ -12,7 +12,7 @@ exports.up = function (knex) {
     table.string("author").notNullable();
     table
       .boolean("is_NYT_best_seller")
-      .defaultTo("0")
+      .defaultTo(0)
       .nullable();
     table
       .string("cover_image")

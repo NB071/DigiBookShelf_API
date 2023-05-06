@@ -13,6 +13,15 @@ router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
 // USER routes
-router.route('/user/books').get(apiController.fetchShelfBook)
+
+router.route('/user')
+  .get(authorize, apiController.fetchAllUserData)
+
+router.route('/user/books')
+  .get(authorize, apiController.fetchShelfBook).post(authorize, apiController.addUserBook);;
+
+router.route('/user/books/recommendation')
+  .get(authorize, apiController.recommendBook);
+// USER routes
 
 module.exports = router;
