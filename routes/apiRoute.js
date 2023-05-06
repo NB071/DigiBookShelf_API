@@ -12,10 +12,13 @@ router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
+
 // USER routes
 
 router.route("/user").get(authorize, apiController.fetchAllUserData);
 
+// USER: PATCH: edit a single book
+router.patch("/user/books/:bookId", authorize, apiController.editUserBookInfo);
 router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)

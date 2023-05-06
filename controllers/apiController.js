@@ -181,39 +181,61 @@ module.exports.recommendBook = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
     const shelfId = decoded.shelf_id;
+    const userId = decoded.user_id;
 
-    // extract users fav genre
+    // extract users fav genre if exists
     let query = await db("shelf")
       .select("book.id as book_id", "book.genre")
       .join("book", "shelf.book", "=", "book.id")
       .where({ shelf_id: shelfId });
 
-    const genresObj = query.reduce((genreCount, book) => {
-      const { genre } = book;
-      genreCount[genre] = (genreCount[genre] || 0) + 1;
-      return genreCount;
-    }, {});
-    const favGenre = Object.entries(genresObj).reduce(
-      (favGenre, [genre, count]) => {
-        if (count > favGenre.count) {
-          favGenre.genre = genre;
-          favGenre.count = count;
-        }
-        return favGenre;
-      },
-      { genre: null, count: 0 }
-    );
-    // use AI to find 5 books with user's favorite genre
-    const completion = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `Response with json format (in []) recommending 5 books in ${favGenre.genre} genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}`,
-      max_tokens: 2000,
-    });
+    const userFavoriteGenre = await db("user")
+      .where({ user_id: userId })
+      .select("favorite_genre")
+      .first();
+    let createdFavoriteGenre;
 
-    res.send(completion.data.choices[0].text);
+    // if not, generates based on books genre in user's shelf
+    if (
+      !userFavoriteGenre.favorite_genre ||
+      userFavoriteGenre.favorite_genre.length === 0
+    ) {
+      const genresObj = query.reduce((genreCount, book) => {
+        const { genre } = book;
+        genreCount[genre] = (genreCount[genre] || 0) + 1;
+        return genreCount;
+      }, {});
+
+      createdFavoriteGenre = Object.entries(genresObj).reduce(
+        (favGenre, [genre, count]) => {
+          if (count > favGenre.count) {
+            favGenre.genre = genre;
+            favGenre.count = count;
+          }
+          return favGenre;
+        },
+        { genre: null, count: 0 }
+      );
+    } else {
+      if (!createdFavoriteGenre) {
+        createdFavoriteGenre = { genre: null, count: 0 };
+      }
+      // use AI to find 5 books with user's favorite genre
+      const completion = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: `Response with json format (in []) recommending 5 books in ${
+          userFavoriteGenre.favorite_genre
+            ? userFavoriteGenre.favorite_genre
+            : createdFavoriteGenre.genre
+        } genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}`,
+        max_tokens: 2000,
+      });
+      res.send(completion.data.choices[0].text);
+    }
+
+    // Continue the logic for the remaining code...
   } catch (err) {
-    console.log(err.response.data.error);
-    res.send(500).json({ error: "Try again" });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -357,7 +379,45 @@ module.exports.editUserBook = async (req, res) => {
       return res.status(400).json({ error: "wrong book ID or body request" });
     }
     res.json({ sucess: "book edited" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
 
+// USER: edit a book itself
+module.exports.editUserBookInfo = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // get books info
+    if (Object.keys(req.body).length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Enter book ID + the field to update" });
+    }
+
+    const request = Object.keys(req.body)
+      .filter((item) => item !== "book_id")
+      .map((key) => ({ [key]: req.body[key] }));
+
+    // check if the book is for the user
+    const book = await db("shelf").where({
+      shelf_id: shelfId,
+      book: req.params.bookId,
+    });
+    if (book.length === 0) {
+      return res.status(404).json({ error: "book not found in the shelf" });
+    }
+    await db("book")
+      .where({
+        id: req.params.bookId,
+      })
+      .update(Object.assign({}, ...request));
+
+    res.json({ sucess: "book edited" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });
