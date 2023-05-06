@@ -14,13 +14,15 @@ router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
 // USER routes
 
-router.route('/user')
-  .get(authorize, apiController.fetchAllUserData)
+router.route("/user").get(authorize, apiController.fetchAllUserData);
 
-router.route('/user/books')
-  .get(authorize, apiController.fetchShelfBook).post(authorize, apiController.addUserBook);;
+router
+  .route("/user/books")
+  .get(authorize, apiController.fetchShelfBook)
+  .post(authorize, apiController.addUserBook).delete(authorize, apiController.deleteUserBook)
 
-router.route('/user/books/recommendation')
+router
+  .route("/user/books/recommendation")
   .get(authorize, apiController.recommendBook);
 // USER routes
 

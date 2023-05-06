@@ -276,6 +276,8 @@ module.exports.addUserBook = async (req, res) => {
       cover_image,
     } = req.body;
     const bookId = v4();
+
+    // add the book to the book table
     await db("book").insert({
       id: bookId,
       name,
@@ -284,8 +286,10 @@ module.exports.addUserBook = async (req, res) => {
       author,
       total_pages,
       cover_image,
-      is_NYT_best_seller: 0
+      is_NYT_best_seller: 0,
     });
+
+    // add the book to the user's shelf
     await db("shelf").insert({
       user_id: userId,
       shelf_id: shelfId,
@@ -293,9 +297,31 @@ module.exports.addUserBook = async (req, res) => {
       read_pages: read_pages ? read_pages : undefined,
       is_pending: read_pages === total_pages ? 0 : 1,
     });
-    res.json({sucess: "book added"});
+
+    res.json({ sucess: "book added" });
   } catch (err) {
     console.log(err);
-    res.status(500).json(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+module.exports.deleteUserBook = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // get books info
+    if (!req.body.book_id) {
+      return res.status(400).json({ error: "book_id is missing" });
+    }
+    await db("shelf")
+      .where({ shelf_id: shelfId, book: req.body.book_id })
+      .del();
+
+    res.json({ sucess: "book deleted" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
   }
 };
