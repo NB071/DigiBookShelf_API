@@ -248,6 +248,7 @@ module.exports.fetchAllUserData = async (req, res) => {
   }
 };
 
+// USER: add a book
 module.exports.addUserBook = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -305,6 +306,7 @@ module.exports.addUserBook = async (req, res) => {
   }
 };
 
+// USER: delete a book
 module.exports.deleteUserBook = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -320,6 +322,42 @@ module.exports.deleteUserBook = async (req, res) => {
       .del();
 
     res.json({ sucess: "book deleted" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+// USER: edit a book for shelf
+module.exports.editUserBook = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // get books info
+    if (!req.body.book_id || Object.keys(req.body).length < 2) {
+      return res
+        .status(400)
+        .json({ error: "Enter book ID + the field to update" });
+    }
+
+    const request = Object.keys(req.body)
+      .filter((item) => item !== "book_id")
+      .map((key) => ({ [key]: req.body[key] }));
+
+    // edit the books based on the req body
+    const editdBook = await db("shelf")
+      .where({
+        shelf_id: shelfId,
+        book: req.body.book_id,
+      })
+      .update(Object.assign({}, ...request));
+    if (!editdBook) {
+      return res.status(400).json({ error: "wrong book ID or body request" });
+    }
+    res.json({ sucess: "book edited" });
+
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });

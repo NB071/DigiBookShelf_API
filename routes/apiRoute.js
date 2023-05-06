@@ -19,7 +19,9 @@ router.route("/user").get(authorize, apiController.fetchAllUserData);
 router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
-  .post(authorize, apiController.addUserBook).delete(authorize, apiController.deleteUserBook)
+  .post(authorize, apiController.addUserBook)
+  .delete(authorize, apiController.deleteUserBook)
+  .patch(authorize, apiController.editUserBook);
 
 router
   .route("/user/books/recommendation")
