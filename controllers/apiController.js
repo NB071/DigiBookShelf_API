@@ -132,6 +132,12 @@ module.exports.register = async (req, res) => {
   }
 };
 
+module.exports.authentication = async (req, res) => {
+  if (req.decoded) {
+    res.json({success: "valid token"})
+  }
+};
+
 module.exports.nytBooks = async (req, res) => {
   const books = await db("book").where({ is_NYT_best_seller: 1 });
   res.send(books);

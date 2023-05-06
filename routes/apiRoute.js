@@ -5,13 +5,13 @@ const { authorize } = require("../utils/Authorize_middleware");
 // auth
 router.post("/login", apiController.login);
 router.post("/register", apiController.register);
+router.get("/verify", authorize, apiController.authentication);
 
 // GET: NYT top seller
 router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
-
 
 // USER routes
 
