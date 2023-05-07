@@ -13,9 +13,11 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // routes from controllers
 const apiRoute = require("./routes/apiRoute");
+const videoRoute = require("./routes/videoRoute");
 
 // routes
 app.use('/api', apiRoute)
+app.use('/videos', videoRoute)
 
 
 // listener
