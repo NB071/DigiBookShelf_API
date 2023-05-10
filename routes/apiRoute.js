@@ -28,6 +28,9 @@ router
 router
   .route("/user/books/recommendation")
   .get(authorize, apiController.recommendBook);
+
+router.get("/user/books/genres", authorize, apiController.userGenres);
+
 // USER routes
 
 module.exports = router;

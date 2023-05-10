@@ -1,7 +1,8 @@
 // knex configuration
 const knexConfig = require("../knexfile");
-const knex = require("knex");
+const { knex } = require("knex");
 const db = knex(knexConfig);
+
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
@@ -44,7 +45,7 @@ module.exports.login = async (req, res) => {
         shelf_id: user.shelf_id,
       },
       process.env.JWT_SIGN_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     res.send({ token });
@@ -62,7 +63,7 @@ module.exports.register = async (req, res) => {
     !req.body.first_name ||
     !req.body.last_name
   ) {
-    return res.send(400).json({ error: "Missing fields" });
+    return res.status(400).json({ error: "Missing fields" });
   }
 
   const {
@@ -152,24 +153,46 @@ module.exports.fetchShelfBook = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
     const userId = decoded.user_id;
-    let query = db("shelf").where({ user_id: userId });
+    let query = await db("shelf")
+      .join("book", "book.id", "=", "shelf.book")
+      .select(
+        "shelf.*",
+        "book.name AS book_name",
+        "book.description",
+        "book.genre",
+        "book.total_pages",
+        "book.author",
+        "book.is_NYT_best_seller",
+        "book.cover_image",
+        "book.purchase_link",
+        "book.created_at",
+        "book.updated_at"
+      )
+      .where({ user_id: userId });
 
     // search query filter
+    if (query.length === 0) {
+      return res.send(query);
+    }
     if (
       req.query.pending !== undefined &&
       (req.query.pending === "0" || req.query.pending === "1")
     ) {
-      query = query.where({ is_pending: req.query.pending });
+      query = query.filter((book) => +book.is_pending === +req.query.pending);
     }
 
     if (req.query.recent !== undefined) {
-      const book = await query.orderBy("add_date", "desc").first();
-      res.send(book);
+      const books = await query;
+      books.sort((a, b) => b.add_date - a.add_date);
+      const book = books[0];
+      return res.send(book);
     } else {
-      const books = await query.orderBy("add_date", "desc");
-      res.send(books);
+      const books = await query;
+      books.sort((a, b) => b.add_date - a.add_date);
+      return res.send(books);
     }
   } catch (err) {
+    console.log(err);
     return res.status(401).json(err);
   }
 };
@@ -227,7 +250,7 @@ module.exports.recommendBook = async (req, res) => {
           userFavoriteGenre.favorite_genre
             ? userFavoriteGenre.favorite_genre
             : createdFavoriteGenre.genre
-        } genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}`,
+        } genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}. for cover_image, use 'openlibrary' with the mose accurate information to 100% get the valid image if the url is Not found, recommend another book that has the valid and correct image! Response with json format (in [])`,
         max_tokens: 2000,
       });
       res.send(completion.data.choices[0].text);
@@ -238,6 +261,52 @@ module.exports.recommendBook = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// USER: get all read genres
+module.exports.userGenres = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // extract users fav genre if exists
+  
+    let query = await db("shelf")
+    .select("book.id as book_id", "book.genre")
+    .join("book", "shelf.book", "=", "book.id")
+    .where({ shelf_id: shelfId });
+
+  // if not, generates based on books genre in user's shelf
+
+    const genresObj = query.reduce((genreCount, book) => {
+      const { genre } = book;
+      genreCount[genre] = (genreCount[genre] || 0) + 1;
+      return genreCount;
+    }, {});
+
+    // const createdFavoriteGenre = Object.entries(genresObj).reduce(
+    //   (favGenre, [genre, count]) => {
+    //     if (count > favGenre.count) {
+    //       favGenre.genre = genre;
+    //       favGenre.count = count;
+    //     }
+    //     return favGenre;
+    //   },
+    //   { genre: null, count: 0 }
+    // );
+    console.log(genresObj);
+    res.json(genresObj);
+    
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
+
+
 
 // USER: get all users info
 module.exports.fetchAllUserData = async (req, res) => {
@@ -260,13 +329,14 @@ module.exports.fetchAllUserData = async (req, res) => {
       .where({ user_id: userId })
       .first();
     const query_friends = await db("friend_list")
-      .select("friend")
-      .where({ user_id: userId });
+      .join("user", "friend_list.friend", "=", "user.user_id")
+      .select("friend_list.user_id", "user.username", "user.avatar_image")
+      .where("friend_list.user_id", userId);
     console.log(query_friends);
-    res.send({ ...query_user, friends: Array.from(query_friends) });
+    return res.send({ ...query_user, friends: Array.from(query_friends) });
   } catch (err) {
     console.log(err);
-    res.send(500).json({ error: "Try again" });
+    res.status(500).json({ error: "Try again" });
   }
 };
 
