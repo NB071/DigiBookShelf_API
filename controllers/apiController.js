@@ -3,6 +3,7 @@ const knexConfig = require("../knexfile");
 const { knex } = require("knex");
 const db = knex(knexConfig);
 
+
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
@@ -153,6 +154,7 @@ module.exports.fetchShelfBook = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
     const userId = decoded.user_id;
+
     let query = await db("shelf")
       .join("book", "book.id", "=", "shelf.book")
       .select(
@@ -184,8 +186,7 @@ module.exports.fetchShelfBook = async (req, res) => {
     if (req.query.recent !== undefined) {
       const books = await query;
       books.sort((a, b) => b.add_date - a.add_date);
-      const book = books[0];
-      return res.send(book);
+      return res.send(books);
     } else {
       const books = await query;
       books.sort((a, b) => b.add_date - a.add_date);
@@ -270,43 +271,24 @@ module.exports.userGenres = async (req, res) => {
     const shelfId = decoded.shelf_id;
 
     // extract users fav genre if exists
-  
     let query = await db("shelf")
     .select("book.id as book_id", "book.genre")
     .join("book", "shelf.book", "=", "book.id")
     .where({ shelf_id: shelfId });
 
   // if not, generates based on books genre in user's shelf
-
     const genresObj = query.reduce((genreCount, book) => {
       const { genre } = book;
       genreCount[genre] = (genreCount[genre] || 0) + 1;
       return genreCount;
     }, {});
 
-    // const createdFavoriteGenre = Object.entries(genresObj).reduce(
-    //   (favGenre, [genre, count]) => {
-    //     if (count > favGenre.count) {
-    //       favGenre.genre = genre;
-    //       favGenre.count = count;
-    //     }
-    //     return favGenre;
-    //   },
-    //   { genre: null, count: 0 }
-    // );
-    console.log(genresObj);
     res.json(genresObj);
     
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
-
-
-
-
-
 
 // USER: get all users info
 module.exports.fetchAllUserData = async (req, res) => {
@@ -355,8 +337,9 @@ module.exports.addUserBook = async (req, res) => {
       !req.body.book_genre ||
       !req.body.book_author ||
       !req.body.total_pages ||
-      !req.body.cover_image
-    ) {
+      !req.file
+      ) {
+      console.log(req.body);
       return res.status(400).json({ error: "Missing fields" });
     }
     const {
@@ -378,7 +361,7 @@ module.exports.addUserBook = async (req, res) => {
       genre,
       author,
       total_pages,
-      cover_image,
+      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`,
       is_NYT_best_seller: 0,
     });
 
@@ -387,14 +370,14 @@ module.exports.addUserBook = async (req, res) => {
       user_id: userId,
       shelf_id: shelfId,
       book: bookId,
-      read_pages: read_pages ? read_pages : undefined,
+      read_pages: read_pages ? read_pages : 0,
       is_pending: read_pages === total_pages ? 0 : 1,
     });
 
     res.json({ sucess: "book added" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Try again later" });
+    res.status(500).json(err);
   }
 };
 
