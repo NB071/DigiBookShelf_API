@@ -3,18 +3,18 @@ const knexConfig = require("../knexfile");
 const { knex } = require("knex");
 const db = knex(knexConfig);
 
-
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
 const { Configuration, OpenAIApi } = require("openai");
-
+const path = require("node:path");
+const fs = require("node:fs");
 //////////////////////////////////
 require("dotenv").config();
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAIApi(configuration)
 //////////////////////////////////
 
 module.exports.login = async (req, res) => {
@@ -34,8 +34,6 @@ module.exports.login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      console.log(user);
-
       return res.status(401).json({ error: "Incorrect email or password" });
     }
 
@@ -272,11 +270,11 @@ module.exports.userGenres = async (req, res) => {
 
     // extract users fav genre if exists
     let query = await db("shelf")
-    .select("book.id as book_id", "book.genre")
-    .join("book", "shelf.book", "=", "book.id")
-    .where({ shelf_id: shelfId });
+      .select("book.id as book_id", "book.genre")
+      .join("book", "shelf.book", "=", "book.id")
+      .where({ shelf_id: shelfId });
 
-  // if not, generates based on books genre in user's shelf
+    // if not, generates based on books genre in user's shelf
     const genresObj = query.reduce((genreCount, book) => {
       const { genre } = book;
       genreCount[genre] = (genreCount[genre] || 0) + 1;
@@ -284,7 +282,6 @@ module.exports.userGenres = async (req, res) => {
     }, {});
 
     res.json(genresObj);
-    
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -314,7 +311,6 @@ module.exports.fetchAllUserData = async (req, res) => {
       .join("user", "friend_list.friend", "=", "user.user_id")
       .select("friend_list.user_id", "user.username", "user.avatar_image")
       .where("friend_list.user_id", userId);
-    console.log(query_friends);
     return res.send({ ...query_user, friends: Array.from(query_friends) });
   } catch (err) {
     console.log(err);
@@ -338,8 +334,7 @@ module.exports.addUserBook = async (req, res) => {
       !req.body.book_author ||
       !req.body.total_pages ||
       !req.file
-      ) {
-      console.log(req.body);
+    ) {
       return res.status(400).json({ error: "Missing fields" });
     }
     const {
@@ -453,8 +448,24 @@ module.exports.editUserBookInfo = async (req, res) => {
     }
 
     const request = Object.keys(req.body)
-      .filter((item) => item !== "book_id")
+      .filter((item) => item !== "book_id" && item !== "read_pages")
       .map((key) => ({ [key]: req.body[key] }));
+
+      // delete the previous generated cover image
+    if (req.file) {
+      const query = await db("book")
+        .where({
+          id: req.params.bookId,
+        })
+        .select("cover_image").first();
+
+        const previousFile = path.basename(query.cover_image);
+        
+      if (previousFile.startsWith('bookCover_')) {
+        const previousFilePath = path.join(__dirname, "..", "public", "bookCovers", previousFile)
+        fs.rmSync(previousFilePath)
+      }
+    }
 
     // check if the book is for the user
     const book = await db("shelf").where({
@@ -464,13 +475,43 @@ module.exports.editUserBookInfo = async (req, res) => {
     if (book.length === 0) {
       return res.status(404).json({ error: "book not found in the shelf" });
     }
+
     await db("book")
       .where({
         id: req.params.bookId,
       })
-      .update(Object.assign({}, ...request));
+      .update(
+        Object.assign(
+          {},
+          ...request,
+          {
+            cover_image: req.file
+              ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
+              : undefined,
+          },
+          { updated_at: db.fn.now() }
+        )
+      );
 
-    res.json({ sucess: "book edited" });
+    if (req.body.read_pages) {
+      if (req.body.read_pages === request.total_pages) {
+        await db("shelf")
+          .where({
+            shelf_id: shelfId,
+            book: req.params.bookId,
+          })
+          .update({ is_pending: 0, read_pages: req.body.read_pages });
+        return res.json({ sucess: "book edited" });
+      } else {
+        await db("shelf")
+          .where({
+            shelf_id: shelfId,
+            book: req.params.bookId,
+          })
+          .update({ is_pending: 1, read_pages: req.body.read_pages });
+        return res.json({ sucess: "book edited" });
+      }
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });

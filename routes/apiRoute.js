@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const multer = require("multer");
 const path = require("path");
-const fs = require("node:fs");
 
 const apiController = require("../controllers/apiController");
 const { authorize } = require("../utils/Authorize_middleware");
@@ -35,14 +34,14 @@ router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
 router.route("/user").get(authorize, apiController.fetchAllUserData);
 
-// USER: PATCH: edit a single book
-router.patch("/user/books/:bookId", authorize, apiController.editUserBookInfo);
+// USER: PUT: edit a single book
+router.patch("/user/books/:bookId", authorize, upload.single('cover_image'), apiController.editUserBookInfo);
 router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
   .post(authorize, upload.single('cover_image'), apiController.addUserBook)
   .delete(authorize, apiController.deleteUserBook)
-  .patch(authorize, apiController.editUserBook);
+  .put(authorize,  upload.single('cover_image'), apiController.editUserBook);
 
 router
   .route("/user/books/recommendation")
