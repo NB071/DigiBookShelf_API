@@ -7,6 +7,7 @@ const { authorize } = require("../utils/Authorize_middleware");
 // auth
 router.post("/login", apiController.login);
 router.post("/register", apiController.register);
+router.get("/verify", authorize, apiController.verify);
 
 // multer
 const storage = multer.diskStorage({
@@ -30,8 +31,9 @@ router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
-// USER routes
+router.get("/user/activities", authorize, apiController.userActivities)
 
+// USER routes
 router.route("/user").get(authorize, apiController.fetchAllUserData);
 
 // USER: PUT: edit a single book

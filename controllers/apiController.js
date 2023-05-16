@@ -14,8 +14,13 @@ require("dotenv").config();
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration)
+const openai = new OpenAIApi(configuration);
 //////////////////////////////////
+
+module.exports.verify = async (req, res) => {
+  //  the token is being check via the middleware
+  res.json({ message: "valid token" });
+};
 
 module.exports.login = async (req, res) => {
   if (!req.body.email || !req.body.password) {
@@ -47,7 +52,7 @@ module.exports.login = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    res.send({ token });
+    res.json({ token });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: "Internal server error" });
@@ -93,9 +98,17 @@ module.exports.register = async (req, res) => {
     const emailCheck = await db("user").where({ email }).first();
 
     // if user exists in database
+
+    if (usernameCheck && emailCheck) {
+      return res
+        .status(409)
+        .json({ error: "Username and Email already exist" });
+    }
+
     if (usernameCheck) {
       return res.status(409).json({ error: "Username already exists" });
     }
+
     if (emailCheck) {
       return res.status(409).json({ error: "Email already exists" });
     }
@@ -182,13 +195,13 @@ module.exports.fetchShelfBook = async (req, res) => {
     }
 
     if (req.query.recent !== undefined) {
-      const books = await query;
-      books.sort((a, b) => b.add_date - a.add_date);
-      return res.send(books);
+      const books = query;
+      books.sort((a, b) => b.updated_at - a.updated_at);
+      return res.json(books);
     } else {
-      const books = await query;
+      const books = query;
       books.sort((a, b) => b.add_date - a.add_date);
-      return res.send(books);
+      return res.json(books);
     }
   } catch (err) {
     console.log(err);
@@ -391,6 +404,27 @@ module.exports.deleteUserBook = async (req, res) => {
       .where({ shelf_id: shelfId, book: req.body.book_id })
       .del();
 
+    // delete the previous generated cover image
+    const query = await db("book")
+      .where({
+        id: req.body.book_id,
+      })
+      .select("cover_image")
+      .first();
+
+    const previousFile = path.basename(query.cover_image);
+
+    if (previousFile.startsWith("bookCover_")) {
+      const previousFilePath = path.join(
+        __dirname,
+        "..",
+        "public",
+        "bookCovers",
+        previousFile
+      );
+      fs.rmSync(previousFilePath);
+    }
+
     res.json({ sucess: "book deleted" });
   } catch (err) {
     console.log(err);
@@ -451,19 +485,26 @@ module.exports.editUserBookInfo = async (req, res) => {
       .filter((item) => item !== "book_id" && item !== "read_pages")
       .map((key) => ({ [key]: req.body[key] }));
 
-      // delete the previous generated cover image
+    // delete the previous generated cover image
     if (req.file) {
       const query = await db("book")
         .where({
           id: req.params.bookId,
         })
-        .select("cover_image").first();
+        .select("cover_image")
+        .first();
 
-        const previousFile = path.basename(query.cover_image);
-        
-      if (previousFile.startsWith('bookCover_')) {
-        const previousFilePath = path.join(__dirname, "..", "public", "bookCovers", previousFile)
-        fs.rmSync(previousFilePath)
+      const previousFile = path.basename(query.cover_image);
+
+      if (previousFile.startsWith("bookCover_")) {
+        const previousFilePath = path.join(
+          __dirname,
+          "..",
+          "public",
+          "bookCovers",
+          previousFile
+        );
+        fs.rmSync(previousFilePath);
       }
     }
 
@@ -494,7 +535,7 @@ module.exports.editUserBookInfo = async (req, res) => {
       );
 
     if (req.body.read_pages) {
-      if (req.body.read_pages === request.total_pages) {
+      if (+req.body.read_pages === +req.body.total_pages) {
         await db("shelf")
           .where({
             shelf_id: shelfId,
@@ -512,6 +553,35 @@ module.exports.editUserBookInfo = async (req, res) => {
         return res.json({ sucess: "book edited" });
       }
     }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+// USER: edit a book itself
+module.exports.userActivities = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const shelfId = decoded.shelf_id;
+
+    // check if the book is for the user
+    const book = await db("shelf")
+      .join("book", "shelf.book", "=", "book.id")
+      .where({
+        shelf_id: shelfId,
+      })
+      .select("shelf.add_date", "book.updated_at");
+    if (book.length === 0) {
+      return res.status(404).json({ error: "book not found in the shelf" });
+    }
+    const updatedData = book.map((item, index) => ({
+      activity: index + 1,
+      ...item,
+    }));
+
+    return res.json(updatedData);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });
