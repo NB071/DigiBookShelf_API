@@ -36,18 +36,18 @@ router.get("/user/activities", authorize, apiController.userActivities)
 // USER routes
 router.route("/user").get(authorize, apiController.fetchAllUserData);
 
-// USER: PUT: edit a single book
+// USER: PATCH: edit a single book
 router.patch("/user/books/:bookId", authorize, upload.single('cover_image'), apiController.editUserBookInfo);
 router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
   .post(authorize, upload.single('cover_image'), apiController.addUserBook)
   .delete(authorize, apiController.deleteUserBook)
-  .put(authorize,  upload.single('cover_image'), apiController.editUserBook);
+  // .patch(authorize,  upload.single('cover_image'), apiController.editUserBook);
 
-router
-  .route("/user/books/recommendation")
-  .get(authorize, apiController.recommendBook);
+// router
+//   .route("/user/books/recommendation")
+//   .get(authorize, apiController.recommendBook);
 
 router.get("/user/books/genres", authorize, apiController.userGenres);
 

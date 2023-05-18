@@ -152,11 +152,20 @@ module.exports.nytBooks = async (req, res) => {
 
 module.exports.fechSingeBook = async (req, res) => {
   const { bookId } = req.params;
-  const books = await db("book").where({ id: bookId }).first();
-  if (!books) {
-    return res.status(404).json({ error: "Book not found" });
+  const booksInShelf = await db("shelf")
+    .join("book", "shelf.book", "=", "book.id")
+    .where({ "shelf.book": bookId })
+    .first();
+  if (booksInShelf) {
+    return res.status(200).json(booksInShelf);
   }
-  res.status(200).json(books);
+
+  const bookInDB = await db("book").where({ id: bookId }).first();
+  if (!bookInDB) {
+    return res.status(404).json({ message: "Book does not exist!" });
+  }
+
+  res.status(200).json(bookInDB);
 };
 
 // USER: Get shelf books
@@ -341,13 +350,14 @@ module.exports.addUserBook = async (req, res) => {
 
     // get books info
     if (
-      !req.body.book_name ||
-      !req.body.book_description ||
-      !req.body.book_genre ||
-      !req.body.book_author ||
-      !req.body.total_pages ||
-      !req.file
+      (!req.body.book_name ||
+        !req.body.book_description ||
+        !req.body.book_genre ||
+        !req.body.book_author ||
+        req.body.total_pages === undefined) &&
+      (!req.file || !req.body.cover_image)
     ) {
+      console.log(req.body);
       return res.status(400).json({ error: "Missing fields" });
     }
     const {
@@ -358,9 +368,22 @@ module.exports.addUserBook = async (req, res) => {
       total_pages,
       read_pages,
       cover_image,
+      is_NYT_best_seller,
+      book_id
     } = req.body;
     const bookId = v4();
 
+    if (is_NYT_best_seller) {
+      await db("shelf").insert({
+        user_id: userId,
+        shelf_id: shelfId,
+        book: book_id,
+        read_pages: read_pages ? read_pages : 0,
+        is_pending: read_pages === total_pages ? 0 : 1,
+      });
+  
+      return res.json({ sucess: "book added" });
+    }
     // add the book to the book table
     await db("book").insert({
       id: bookId,
@@ -369,8 +392,12 @@ module.exports.addUserBook = async (req, res) => {
       genre,
       author,
       total_pages,
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`,
-      is_NYT_best_seller: 0,
+      cover_image: `${
+        req.file
+          ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
+          : cover_image
+      }`,
+      is_NYT_best_seller: req.body.is_NYT_best_seller ? 1 : 0,
     });
 
     // add the book to the user's shelf
