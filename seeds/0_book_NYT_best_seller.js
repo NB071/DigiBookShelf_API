@@ -16,7 +16,7 @@ exports.seed = async function (knex) {
         name: book.name,
         description: book.description,
         genre: book.genre,
-        total_pages: book.total_pages,
+        total_pages: +book.total_pages,
         author: book.author,
         is_NYT_best_seller: 1,
         cover_image: book.cover_image,

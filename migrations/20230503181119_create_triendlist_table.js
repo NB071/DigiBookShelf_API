@@ -9,7 +9,8 @@ exports.up = function (knex) {
       .references("user.user_id")
       .onUpdate("CASCADE")
       .onDelete("CASCADE");
-    table.json("friends").defaultTo({});
+    table.uuid("friend").references("user.user_id").notNullable();
+    table.boolean("is_online").nullable().defaultTo(0);
   });
 };
 

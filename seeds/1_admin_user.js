@@ -12,13 +12,13 @@ exports.seed = async function (knex) {
     {
       user_id: "admin",
       shelf_id: "admin123",
-      first_name: "nima",
-      last_name: "bargestan",
-      username: "nimab",
+      first_name: "test",
+      last_name: "user",
+      username: "test",
       email: "test@gmail.com",
-      password: "password",
+      password: "$2a$10$f7uQgmsTUwIvOuJRiw/xl.9GYz7UJF6JBPB/Z290DntlyoePz6WNC",
       goal_set: 20,
-      favorite_genre: "fiction"
+      favorite_genre: "non-finction"
     },
   ]);
 };

@@ -187,29 +187,26 @@ module.exports.fetchShelfBook = async (req, res) => {
         "book.is_NYT_best_seller",
         "book.cover_image",
         "book.purchase_link",
-        "book.created_at",
-        "book.updated_at"
+        "book.created_at AS book_init_created_at",
       )
       .where({ user_id: userId });
 
-    // search query filter
-    if (query.length === 0) {
+      // search query filter
+      if (query.length === 0) {
       return res.send(query);
     }
-    if (
-      req.query.pending !== undefined &&
-      (req.query.pending === "0" || req.query.pending === "1")
-    ) {
+    if (req.query.pending !== undefined && ["0", "1"].includes(req.query.pending)) {
       query = query.filter((book) => +book.is_pending === +req.query.pending);
+      
     }
-
     if (req.query.recent !== undefined) {
       const books = query;
-      books.sort((a, b) => b.updated_at - a.updated_at);
+      books.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    
       return res.json(books);
     } else {
       const books = query;
-      books.sort((a, b) => b.add_date - a.add_date);
+      books.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return res.json(books);
     }
   } catch (err) {
@@ -557,7 +554,7 @@ module.exports.editUserBookInfo = async (req, res) => {
               ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
               : undefined,
           },
-          { updated_at: db.fn.now() }
+
         )
       );
 
@@ -568,7 +565,7 @@ module.exports.editUserBookInfo = async (req, res) => {
             shelf_id: shelfId,
             book: req.params.bookId,
           })
-          .update({ is_pending: 0, read_pages: req.body.read_pages });
+          .update({ is_pending: 0, read_pages: req.body.read_pages, updated_at: db.fn.now() });
         return res.json({ sucess: "book edited" });
       } else {
         await db("shelf")
@@ -576,7 +573,7 @@ module.exports.editUserBookInfo = async (req, res) => {
             shelf_id: shelfId,
             book: req.params.bookId,
           })
-          .update({ is_pending: 1, read_pages: req.body.read_pages });
+          .update({ is_pending: 1, read_pages: req.body.read_pages, updated_at: db.fn.now() });
         return res.json({ sucess: "book edited" });
       }
     }
@@ -595,11 +592,10 @@ module.exports.userActivities = async (req, res) => {
 
     // check if the book is for the user
     const book = await db("shelf")
-      .join("book", "shelf.book", "=", "book.id")
       .where({
         shelf_id: shelfId,
       })
-      .select("shelf.add_date", "book.updated_at");
+      .select("created_at", "updated_at");
     if (book.length === 0) {
       return res.status(404).json({ error: "book not found in the shelf" });
     }
