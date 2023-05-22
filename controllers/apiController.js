@@ -328,7 +328,7 @@ module.exports.fetchAllUserData = async (req, res) => {
       .first();
     const query_friends = await db("friend_list")
       .join("user", "friend_list.friend", "=", "user.user_id")
-      .select("friend_list.user_id", "user.username", "user.avatar_image")
+      .select("friend_list.user_id", "user.username", "friend_list.friend", "user.avatar_image")
       .where("friend_list.user_id", userId);
     return res.send({ ...query_user, friends: Array.from(query_friends) });
   } catch (err) {
@@ -585,6 +585,7 @@ module.exports.editUserBookInfo = async (req, res) => {
 
 // USER: edit a book itself
 module.exports.userActivities = async (req, res) => {
+
   try {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
@@ -610,3 +611,4 @@ module.exports.userActivities = async (req, res) => {
     res.status(500).json({ error: "Try again later" });
   }
 };
+
