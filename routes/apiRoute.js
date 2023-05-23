@@ -42,11 +42,12 @@ router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
 router.get("/user/activities", authorize, apiController.userActivities);
 
+
 // USER routes
 router
-  .route("/user")
-  .get(authorize, apiController.fetchAllUserData)
-  .patch(authorize, upload.single("avatar_image"), apiController.editUserData);
+.route("/user")
+.get(authorize, apiController.fetchAllUserData)
+.patch(authorize, upload.single("avatar_image"), apiController.editUserData)
 
 // USER: PATCH: edit a single book
 router.patch(
@@ -54,15 +55,16 @@ router.patch(
   authorize,
   upload.single("cover_image"),
   apiController.editUserBookInfo
-);
-router
+  );
+  
+  router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
   .post(authorize, upload.single("cover_image"), apiController.addUserBook)
   .delete(authorize, apiController.deleteUserBook);
-
-router.get("/user/books/genres", authorize, apiController.userGenres);
-
-// USER routes
-
+  
+  router.get("/user/books/genres", authorize, apiController.userGenres);
+  
+  router.patch("/user/password", authorize, apiController.editUserPassword)
+  
 module.exports = router;

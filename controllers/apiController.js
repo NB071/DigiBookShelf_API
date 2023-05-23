@@ -285,15 +285,13 @@ module.exports.editUserData = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
     const userId = decoded.user_id;
-    if ( Object.keys(req.body).length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Empty request" });
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: "Empty request" });
     }
     const request = Object.keys(req.body)
-    .filter((item) => item !== "user_id")
-    .map((key) => ({ [key]: req.body[key] }));
-   
+      .filter((item) => item !== "user_id")
+      .map((key) => ({ [key]: req.body[key] }));
+
     // delete the previous generated cover image
     if (req.file) {
       const query = await db("user")
@@ -302,7 +300,7 @@ module.exports.editUserData = async (req, res) => {
         })
         .select("avatar_image")
         .first();
-        const previousFile = path.basename(query.avatar_image);
+      const previousFile = path.basename(query.avatar_image);
 
       if (previousFile.startsWith("avatar_")) {
         const previousFilePath = path.join(
@@ -315,23 +313,50 @@ module.exports.editUserData = async (req, res) => {
         fs.rmSync(previousFilePath);
       }
     }
-    
+
     const editUser = await db("user")
-    .where({
-      user_id: userId,
-    })
-    .update(Object.assign({}, ...request, {
-      avatar_image: req.file
-        ? `${process.env.SERVER_URL}:${process.env.PORT}/avatarImages/${req.file.filename}`
-        : undefined,
-    }));
+      .where({
+        user_id: userId,
+      })
+      .update(
+        Object.assign({}, ...request, {
+          avatar_image: req.file
+            ? `${process.env.SERVER_URL}:${process.env.PORT}/avatarImages/${req.file.filename}`
+            : undefined,
+        })
+      );
 
     if (!editUser) {
       return res.status(400).json({ error: "wrong book ID or body request" });
     }
     res.json({ sucess: "user edited" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
 
+// USER: edit users password
+module.exports.editUserPassword = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: "Empty request" });
+    }
+    if (!req.body.password) {
+      return res.status(400).json({ error: "missing password info" });
+    }
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
+    await db("user")
+      .where({
+        user_id: userId,
+      })
+      .update({ password: hashedPassword });
+
+    res.json({ sucess: "password changed" });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
