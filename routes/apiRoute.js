@@ -37,6 +37,7 @@ const upload = multer({
 // GET: NYT top seller
 router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 
+// GET: list all the users
 router.get("/users", authorize, apiController.allDashboardUsers)
 
 // GET: singe book info
@@ -50,6 +51,12 @@ router
 .route("/user")
 .get(authorize, apiController.fetchAllUserData)
 .patch(authorize, upload.single("avatar_image"), apiController.editUserData)
+
+router
+.route("/user/friends")
+.post(authorize, apiController.addFriend)
+.delete(authorize, apiController.removeFriend)
+
 
 // USER: PATCH: edit a single book
 router.patch(

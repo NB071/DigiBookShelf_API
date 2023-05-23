@@ -155,17 +155,21 @@ module.exports.allDashboardUsers = async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.JWT_SIGN_KEY);
 
-    let query = await db("user")
-      .select("user_id", "username", "first_name", "last_name", "avatar_image", "is_online");
+    let query = await db("user").select(
+      "user_id",
+      "username",
+      "first_name",
+      "last_name",
+      "avatar_image",
+      "is_online"
+    );
 
-      return res.json(query);
-    
+    return res.json(query);
   } catch (err) {
     console.log(err);
     return res.status(401).json(err);
   }
 };
-
 
 module.exports.fechSingeBook = async (req, res) => {
   const { bookId } = req.params;
@@ -651,6 +655,78 @@ module.exports.userActivities = async (req, res) => {
     }));
 
     return res.json(updatedData);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+// USER: add friend
+module.exports.addFriend = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+
+    if (!req.body.friend) {
+      return res
+        .status(400)
+        .json({ error: "Friend's user ID must be provided" });
+    }
+    const friendId = req.body.friend;
+
+    const frindExists = await db("user").where({ user_id: friendId });
+    if (frindExists.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Friend does not exist inside the database" });
+    }
+
+    const friendAlreadyAdded = await db("friend_list").where({user_id: userId, friend: friendId}).first()
+    if (friendAlreadyAdded) {
+      return res
+      .status(409)
+      .json({ error: "Friend already added" });
+    }
+
+
+    await db("friend_list").insert({
+      user_id: userId,
+      friend: friendId,
+    });
+
+    return res.json("friend added!");
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+// USER: remove friend
+module.exports.removeFriend = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+
+    if (!req.body.friend) {
+      return res
+        .status(400)
+        .json({ error: "Friend's user ID must be provided" });
+    }
+
+    const friendId = req.body.friend;
+    
+    const frindExists = await db("user").where({ user_id: friendId });
+    if (frindExists.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Friend does not exist inside the database" });
+    }
+
+    await db("friend_list").where({user_id: userId, friend: friendId}).delete()
+
+    return res.json("friend removed!");
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });
