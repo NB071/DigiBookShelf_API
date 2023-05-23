@@ -37,6 +37,8 @@ const upload = multer({
 // GET: NYT top seller
 router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 
+router.get("/users", authorize, apiController.allDashboardUsers)
+
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 

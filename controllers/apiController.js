@@ -150,6 +150,23 @@ module.exports.nytBooks = async (req, res) => {
   res.send(books);
 };
 
+module.exports.allDashboardUsers = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SIGN_KEY);
+
+    let query = await db("user")
+      .select("user_id", "username", "first_name", "last_name", "avatar_image", "is_online");
+
+      return res.json(query);
+    
+  } catch (err) {
+    console.log(err);
+    return res.status(401).json(err);
+  }
+};
+
+
 module.exports.fechSingeBook = async (req, res) => {
   const { bookId } = req.params;
   const booksInShelf = await db("shelf")
