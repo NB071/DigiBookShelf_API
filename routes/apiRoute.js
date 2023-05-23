@@ -12,18 +12,27 @@ router.get("/verify", authorize, apiController.verify);
 // multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dest = path.join(__dirname, "..", "public", "bookCovers");
+    let dest;
+    console.log(file);
+    if (file && file.fieldname === "cover_image") {
+      dest = path.join(__dirname, "..", "public", "bookCovers");
+    } else if (file && file.fieldname === "avatar_image") {
+      dest = path.join(__dirname, "..", "public", "avatarImages");
+    } 
+
+    console.log(dest);
+
     cb(null, dest);
   },
   filename: (req, file, cb) => {
-    cb(null, `bookCover_${Date.now()}${path.extname(file.originalname)}`);
+    const prefix = req.file && req.file.fieldname === 'cover_image' ? 'bookCover' : 'avatar';
+    cb(null, `${prefix}_${Date.now()}${path.extname(file.originalname)}`);
   },
 });
 const upload = multer({
   storage: storage,
   limits: { fileSize: 100000000 },
-})
-
+});
 
 // GET: NYT top seller
 router.get("/nyt-best-seller", authorize, apiController.nytBooks);
@@ -31,24 +40,27 @@ router.get("/nyt-best-seller", authorize, apiController.nytBooks);
 // GET: singe book info
 router.get("/books/:bookId", authorize, apiController.fechSingeBook);
 
-router.get("/user/activities", authorize, apiController.userActivities)
+router.get("/user/activities", authorize, apiController.userActivities);
 
 // USER routes
-router.route("/user").get(authorize, apiController.fetchAllUserData);
+router
+  .route("/user")
+  .get(authorize, apiController.fetchAllUserData)
+  .patch(authorize, upload.single("avatar_image"), apiController.editUserData);
 
 // USER: PATCH: edit a single book
-router.patch("/user/books/:bookId", authorize, upload.single('cover_image'), apiController.editUserBookInfo);
+router.patch(
+  "/user/books/:bookId",
+  authorize,
+  upload.single("cover_image"),
+  apiController.editUserBookInfo
+);
 router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
-  .post(authorize, upload.single('cover_image'), apiController.addUserBook)
-  .delete(authorize, apiController.deleteUserBook)
-  // .patch(authorize,  upload.single('cover_image'), apiController.editUserBook);
+  .post(authorize, upload.single("cover_image"), apiController.addUserBook)
+  .delete(authorize, apiController.deleteUserBook);
 
-// router
-//   .route("/user/books/recommendation")
-//   .get(authorize, apiController.recommendBook);
-// router.get("/user/friends/:friendId")
 router.get("/user/books/genres", authorize, apiController.userGenres);
 
 // USER routes

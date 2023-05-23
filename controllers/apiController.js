@@ -187,22 +187,24 @@ module.exports.fetchShelfBook = async (req, res) => {
         "book.is_NYT_best_seller",
         "book.cover_image",
         "book.purchase_link",
-        "book.created_at AS book_init_created_at",
+        "book.created_at AS book_init_created_at"
       )
       .where({ user_id: userId });
 
-      // search query filter
-      if (query.length === 0) {
+    // search query filter
+    if (query.length === 0) {
       return res.send(query);
     }
-    if (req.query.pending !== undefined && ["0", "1"].includes(req.query.pending)) {
+    if (
+      req.query.pending !== undefined &&
+      ["0", "1"].includes(req.query.pending)
+    ) {
       query = query.filter((book) => +book.is_pending === +req.query.pending);
-      
     }
     if (req.query.recent !== undefined) {
       const books = query;
       books.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-    
+
       return res.json(books);
     } else {
       const books = query;
@@ -212,71 +214,6 @@ module.exports.fetchShelfBook = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(401).json(err);
-  }
-};
-
-// USER: get recommendation based on user's genre
-
-module.exports.recommendBook = async (req, res) => {
-  try {
-    const token = req.headers.authorization.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
-    const shelfId = decoded.shelf_id;
-    const userId = decoded.user_id;
-
-    // extract users fav genre if exists
-    let query = await db("shelf")
-      .select("book.id as book_id", "book.genre")
-      .join("book", "shelf.book", "=", "book.id")
-      .where({ shelf_id: shelfId });
-
-    const userFavoriteGenre = await db("user")
-      .where({ user_id: userId })
-      .select("favorite_genre")
-      .first();
-    let createdFavoriteGenre;
-
-    // if not, generates based on books genre in user's shelf
-    if (
-      !userFavoriteGenre.favorite_genre ||
-      userFavoriteGenre.favorite_genre.length === 0
-    ) {
-      const genresObj = query.reduce((genreCount, book) => {
-        const { genre } = book;
-        genreCount[genre] = (genreCount[genre] || 0) + 1;
-        return genreCount;
-      }, {});
-
-      createdFavoriteGenre = Object.entries(genresObj).reduce(
-        (favGenre, [genre, count]) => {
-          if (count > favGenre.count) {
-            favGenre.genre = genre;
-            favGenre.count = count;
-          }
-          return favGenre;
-        },
-        { genre: null, count: 0 }
-      );
-    } else {
-      if (!createdFavoriteGenre) {
-        createdFavoriteGenre = { genre: null, count: 0 };
-      }
-      // use AI to find 5 books with user's favorite genre
-      const completion = await openai.createCompletion({
-        model: "text-davinci-003",
-        prompt: `Response with json format (in []) recommending 5 books in ${
-          userFavoriteGenre.favorite_genre
-            ? userFavoriteGenre.favorite_genre
-            : createdFavoriteGenre.genre
-        } genre. give me the {"name", "description": short 4 sentence, "genre", "total_pages", "author", "cover_image", "purchase_link"}. for cover_image, use 'openlibrary' with the mose accurate information to 100% get the valid image if the url is Not found, recommend another book that has the valid and correct image! Response with json format (in [])`,
-        max_tokens: 2000,
-      });
-      res.send(completion.data.choices[0].text);
-    }
-
-    // Continue the logic for the remaining code...
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 };
 
@@ -328,12 +265,76 @@ module.exports.fetchAllUserData = async (req, res) => {
       .first();
     const query_friends = await db("friend_list")
       .join("user", "friend_list.friend", "=", "user.user_id")
-      .select("friend_list.user_id", "user.username", "friend_list.friend", "user.avatar_image")
+      .select(
+        "friend_list.user_id",
+        "user.username",
+        "friend_list.friend",
+        "user.avatar_image"
+      )
       .where("friend_list.user_id", userId);
     return res.send({ ...query_user, friends: Array.from(query_friends) });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again" });
+  }
+};
+
+// USER: edit users info
+module.exports.editUserData = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+    if ( Object.keys(req.body).length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Empty request" });
+    }
+    const request = Object.keys(req.body)
+    .filter((item) => item !== "user_id")
+    .map((key) => ({ [key]: req.body[key] }));
+   
+    // delete the previous generated cover image
+    if (req.file) {
+      const query = await db("user")
+        .where({
+          user_id: userId,
+        })
+        .select("avatar_image")
+        .first();
+        const previousFile = path.basename(query.avatar_image);
+
+      if (previousFile.startsWith("avatar_")) {
+        const previousFilePath = path.join(
+          __dirname,
+          "..",
+          "public",
+          "avatarImages",
+          previousFile
+        );
+        fs.rmSync(previousFilePath);
+      }
+    }
+    
+    const editUser = await db("user")
+    .where({
+      user_id: userId,
+    })
+    .update(Object.assign({}, ...request, {
+      avatar_image: req.file
+        ? `${process.env.SERVER_URL}:${process.env.PORT}/avatarImages/${req.file.filename}`
+        : undefined,
+    }));
+
+    if (!editUser) {
+      return res.status(400).json({ error: "wrong book ID or body request" });
+    }
+    res.json({ sucess: "user edited" });
+
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
   }
 };
 
@@ -366,7 +367,7 @@ module.exports.addUserBook = async (req, res) => {
       read_pages,
       cover_image,
       is_NYT_best_seller,
-      book_id
+      book_id,
     } = req.body;
     const bookId = v4();
 
@@ -378,7 +379,7 @@ module.exports.addUserBook = async (req, res) => {
         read_pages: read_pages ? read_pages : 0,
         is_pending: read_pages === total_pages ? 0 : 1,
       });
-  
+
       return res.json({ sucess: "book added" });
     }
     // add the book to the book table
@@ -546,16 +547,11 @@ module.exports.editUserBookInfo = async (req, res) => {
         id: req.params.bookId,
       })
       .update(
-        Object.assign(
-          {},
-          ...request,
-          {
-            cover_image: req.file
-              ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
-              : undefined,
-          },
-
-        )
+        Object.assign({}, ...request, {
+          cover_image: req.file
+            ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
+            : undefined,
+        })
       );
 
     if (req.body.read_pages) {
@@ -565,7 +561,11 @@ module.exports.editUserBookInfo = async (req, res) => {
             shelf_id: shelfId,
             book: req.params.bookId,
           })
-          .update({ is_pending: 0, read_pages: req.body.read_pages, updated_at: db.fn.now() });
+          .update({
+            is_pending: 0,
+            read_pages: req.body.read_pages,
+            updated_at: db.fn.now(),
+          });
         return res.json({ sucess: "book edited" });
       } else {
         await db("shelf")
@@ -573,7 +573,11 @@ module.exports.editUserBookInfo = async (req, res) => {
             shelf_id: shelfId,
             book: req.params.bookId,
           })
-          .update({ is_pending: 1, read_pages: req.body.read_pages, updated_at: db.fn.now() });
+          .update({
+            is_pending: 1,
+            read_pages: req.body.read_pages,
+            updated_at: db.fn.now(),
+          });
         return res.json({ sucess: "book edited" });
       }
     }
@@ -585,7 +589,6 @@ module.exports.editUserBookInfo = async (req, res) => {
 
 // USER: edit a book itself
 module.exports.userActivities = async (req, res) => {
-
   try {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
@@ -611,4 +614,3 @@ module.exports.userActivities = async (req, res) => {
     res.status(500).json({ error: "Try again later" });
   }
 };
-

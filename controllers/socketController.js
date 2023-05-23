@@ -18,18 +18,16 @@ module.exports.socketController = (io) => {
       const userId = decoded.user_id;
 
       await db("user").where("user_id", userId).update({ is_online: 1 });
+      const user = await db("user").where("user_id", userId).first();
+
+      onlineFriends.set(userId, user);
 
       socket.join(userId);
 
+      const onlineFriendList = Array.from(onlineFriends.values());
+      socket.emit("onlineUsers", onlineFriendList);
+
       socket.on("userFriends", async (friendsList) => {
-        const user = await db("user")
-          .where({
-            user_id: userId,
-          })
-          .first();
-
-        onlineFriends.set(userId, user);
-
         friendsList.forEach((friend) => {
           socket.join(friend.friend);
         });
@@ -43,24 +41,20 @@ module.exports.socketController = (io) => {
 
         onlineUsers.forEach((user) => onlineFriends.set(user.user_id, user));
 
-        const onlineFriendList = Array.from(onlineFriends.values())
+        const updatedOnlineFriendList = Array.from(onlineFriends.values());
 
-        socket.broadcast.emit("onlineUsers", onlineFriendList);
-        socket.emit("onlineUsers", onlineFriendList);
+        socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
       });
-
       socket.on("disconnect", async () => {
         await db("user").where("user_id", userId).update({ is_online: 0 });
-
         onlineFriends.delete(userId);
 
-        const onlineFriendList = Array.from(onlineFriends.values())
+        const updatedOnlineFriendList = Array.from(onlineFriends.values());
 
-        socket.broadcast.emit("onlineUsers", onlineFriendList);
+        socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
 
         console.log(`${socket.id} disconnected`);
       });
-
     } catch (error) {
       console.error("Authentication error:", error.message);
       socket.disconnect();
