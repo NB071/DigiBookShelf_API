@@ -153,7 +153,8 @@ module.exports.nytBooks = async (req, res) => {
 module.exports.allDashboardUsers = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
-    jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
 
     let query = await db("user").select(
       "user_id",
@@ -164,7 +165,7 @@ module.exports.allDashboardUsers = async (req, res) => {
       "is_online"
     );
 
-    return res.json(query);
+    return res.json(query.filter((users) => users.user_id !== userId));
   } catch (err) {
     console.log(err);
     return res.status(401).json(err);
@@ -663,6 +664,7 @@ module.exports.userActivities = async (req, res) => {
 
 // USER: add friend
 module.exports.addFriend = async (req, res) => {
+
   try {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
@@ -682,13 +684,12 @@ module.exports.addFriend = async (req, res) => {
         .json({ error: "Friend does not exist inside the database" });
     }
 
-    const friendAlreadyAdded = await db("friend_list").where({user_id: userId, friend: friendId}).first()
+    const friendAlreadyAdded = await db("friend_list")
+      .where({ user_id: userId, friend: friendId })
+      .first();
     if (friendAlreadyAdded) {
-      return res
-      .status(409)
-      .json({ error: "Friend already added" });
+      return res.status(409).json({ error: "Friend already added" });
     }
-
 
     await db("friend_list").insert({
       user_id: userId,
@@ -716,7 +717,7 @@ module.exports.removeFriend = async (req, res) => {
     }
 
     const friendId = req.body.friend;
-    
+
     const frindExists = await db("user").where({ user_id: friendId });
     if (frindExists.length === 0) {
       return res
@@ -724,7 +725,9 @@ module.exports.removeFriend = async (req, res) => {
         .json({ error: "Friend does not exist inside the database" });
     }
 
-    await db("friend_list").where({user_id: userId, friend: friendId}).delete()
+    await db("friend_list")
+      .where({ user_id: userId, friend: friendId })
+      .delete();
 
     return res.json("friend removed!");
   } catch (err) {

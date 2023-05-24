@@ -1,5 +1,3 @@
-const { v4 } = require("uuid");
-
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
@@ -18,7 +16,8 @@ exports.seed = async function (knex) {
       email: "test@gmail.com",
       password: "$2a$10$f7uQgmsTUwIvOuJRiw/xl.9GYz7UJF6JBPB/Z290DntlyoePz6WNC",
       goal_set: 20,
-      favorite_genre: "non-finction"
+      favorite_genre: "non-finction",
+      avatar_image: "https://i.pravatar.cc/150?img=2"
     },
   ]);
 };

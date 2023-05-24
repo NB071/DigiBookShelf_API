@@ -16,9 +16,8 @@ exports.up = function (knex) {
       .defaultTo("https://i.pravatar.cc/150?img=2")
       .nullable();
     table.integer("goal_set").nullable();
-    table
-      .string("favorite_genre").defaultTo("none").nullable();
-    table.timestamp("join_date").defaultTo(knex.fn.now());
+    table.string("favorite_genre").defaultTo("none").nullable();
+    table.boolean("is_online").defaultTo(0).nullable();
   });
 };
 
