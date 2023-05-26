@@ -57,6 +57,8 @@ router
 .post(authorize, apiController.addFriend)
 .delete(authorize, apiController.removeFriend)
 
+router.post("/user/friends/accept", authorize, apiController.acceptFriendRequest);
+router.post("/user/friends/reject", authorize, apiController.rejectFriendRequest);
 
 // USER: PATCH: edit a single book
 router.patch(

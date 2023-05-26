@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 module.exports.socketController = (io) => {
-  const socketInstances = {}; // Object to store socket instances
+  const socketInstances = {};
 
   io.on("connection", async (socket) => {
     console.log(`A user connected ${socket.id}`);
@@ -27,7 +27,6 @@ module.exports.socketController = (io) => {
       );
       socket.emit("onlineUsers", onlineFriendList);
 
-      // Store the socket instance associated with the user ID
       socketInstances[userId] = { socket, user };
 
       socket.on("userFriends", async (friendsList) => {
@@ -52,21 +51,15 @@ module.exports.socketController = (io) => {
         const updatedOnlineFriendList = Object.values(socketInstances).map(
           (instance) => instance.user
         );
-
         socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
       });
 
-      socket.on("addFriend", async (friendId) => {
-        const recipientSocket = socketInstances[friendId]?.socket;
+      socket.on("notifications", async (notification) => {
+        console.log(notification);
+        const recipientSocket =
+          socketInstances[notification.notificationTo.id]?.socket;
         if (recipientSocket) {
-          recipientSocket.emit("addFriend", userId);
-        }
-      });
-
-      socket.on("removeFriend", async (friendId) => {
-        const recipientSocket = socketInstances[friendId]?.socket;
-        if (recipientSocket) {
-          recipientSocket.emit("removeFriend", userId);
+          recipientSocket.emit("notifications", notification);
         }
       });
 

@@ -6,15 +6,11 @@ const db = knex(knexConfig);
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { v4 } = require("uuid");
-const { Configuration, OpenAIApi } = require("openai");
 const path = require("node:path");
 const fs = require("node:fs");
 //////////////////////////////////
 require("dotenv").config();
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+
 //////////////////////////////////
 
 module.exports.verify = async (req, res) => {
@@ -285,6 +281,7 @@ module.exports.fetchAllUserData = async (req, res) => {
       )
       .where({ user_id: userId })
       .first();
+
     const query_friends = await db("friend_list")
       .join("user", "friend_list.friend", "=", "user.user_id")
       .select(
@@ -294,8 +291,14 @@ module.exports.fetchAllUserData = async (req, res) => {
         "friend_list.status",
         "user.avatar_image"
       )
-      .where("friend_list.user_id", userId);
-    return res.send({ ...query_user, friends: Array.from(query_friends) });
+      .where((builder) => {
+        builder
+          .where("friend_list.user_id", userId)
+          .orWhere("friend_list.friend", userId);
+      })
+      .andWhere({ "friend_list.status": "accepted" });
+
+    return res.json({ ...query_user, friends: query_friends });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again" });
@@ -663,9 +666,8 @@ module.exports.userActivities = async (req, res) => {
   }
 };
 
-// USER: add friend
+// USER: add friend -- pending
 module.exports.addFriend = async (req, res) => {
-
   try {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
@@ -692,9 +694,14 @@ module.exports.addFriend = async (req, res) => {
       return res.status(409).json({ error: "Friend already added" });
     }
 
+    await db("friend_list")
+      .where({ user_id: friendId, friend: userId, status: "rejected" })
+      .del();
+
     await db("friend_list").insert({
       user_id: userId,
       friend: friendId,
+      status: "pending",
     });
 
     return res.json("friend added!");
@@ -727,10 +734,100 @@ module.exports.removeFriend = async (req, res) => {
     }
 
     await db("friend_list")
-      .where({ user_id: userId, friend: friendId })
+      .where((builder) => {
+        builder
+          .where({ user_id: userId, friend: friendId })
+          .orWhere({ user_id: friendId, friend: userId });
+      })
       .delete();
 
     return res.json("friend removed!");
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+//USER: accpet friend request
+module.exports.acceptFriendRequest = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+
+    const friendId = req.body.friend;
+
+    if (!friendId) {
+      return res
+        .status(400)
+        .json({ error: "Friend's user ID must be provided" });
+    }
+
+    const friendExists = await db("user").where({ user_id: friendId }).first();
+    if (!friendExists) {
+      return res
+        .status(404)
+        .json({ error: "Friend does not exist in the database" });
+    }
+
+    const friendOnPending = await db("friend_list")
+      .where({ user_id: friendId, friend: userId, status: "pending" })
+      .first();
+
+    if (!friendOnPending) {
+      return res
+        .status(404)
+        .json({ error: `There's no friend request from ${friendId}` });
+    }
+
+    await db("friend_list")
+      .where({ user_id: friendId, friend: userId, status: "pending" })
+      .update({ status: "accepted" });
+
+    res.json({ message: "Friend request accepted successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+//USER: reject friend request
+module.exports.rejectFriendRequest = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+    const userId = decoded.user_id;
+
+    const friendId = req.body.friend;
+
+    if (!friendId) {
+      return res
+        .status(400)
+        .json({ error: "Friend's user ID must be provided" });
+    }
+
+    const friendExists = await db("user").where({ user_id: friendId }).first();
+    if (!friendExists) {
+      return res
+        .status(404)
+        .json({ error: "Friend does not exist in the database" });
+    }
+
+    const friendOnAccepted = await db("friend_list")
+      .where({ user_id: friendId, friend: userId, status: "accepted" })
+      .first();
+
+    if (!friendOnAccepted) {
+      return res
+        .status(404)
+        .json({ error: `There's no friend called ${friendId}` });
+    }
+
+    await db("friend_list")
+      .where({ user_id: friendId, friend: userId, status: "accepted" })
+      .update({ status: "rejected" });
+
+    res.json({ message: "Friend request rejected successfully" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });
