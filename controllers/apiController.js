@@ -291,6 +291,7 @@ module.exports.fetchAllUserData = async (req, res) => {
         "friend_list.user_id",
         "user.username",
         "friend_list.friend",
+        "friend_list.status",
         "user.avatar_image"
       )
       .where("friend_list.user_id", userId);

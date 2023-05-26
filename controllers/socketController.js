@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 module.exports.socketController = (io) => {
-  const onlineFriends = new Map();
+  const socketInstances = {}; // Object to store socket instances
 
   io.on("connection", async (socket) => {
     console.log(`A user connected ${socket.id}`);
@@ -20,12 +20,15 @@ module.exports.socketController = (io) => {
       await db("user").where("user_id", userId).update({ is_online: 1 });
       const user = await db("user").where("user_id", userId).first();
 
-      onlineFriends.set(userId, user);
-
       socket.join(userId);
 
-      const onlineFriendList = Array.from(onlineFriends.values());
+      const onlineFriendList = Object.values(socketInstances).map(
+        (instance) => instance.user
+      );
       socket.emit("onlineUsers", onlineFriendList);
+
+      // Store the socket instance associated with the user ID
+      socketInstances[userId] = { socket, user };
 
       socket.on("userFriends", async (friendsList) => {
         friendsList.forEach((friend) => {
@@ -39,17 +42,42 @@ module.exports.socketController = (io) => {
           )
           .andWhere("is_online", 1);
 
-        onlineUsers.forEach((user) => onlineFriends.set(user.user_id, user));
+        onlineUsers.forEach((user) => {
+          socketInstances[user.user_id] = {
+            socket: socketInstances[user.user_id]?.socket || socket,
+            user: user,
+          };
+        });
 
-        const updatedOnlineFriendList = Array.from(onlineFriends.values());
+        const updatedOnlineFriendList = Object.values(socketInstances).map(
+          (instance) => instance.user
+        );
 
         socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
       });
+
+      socket.on("addFriend", async (friendId) => {
+        const recipientSocket = socketInstances[friendId]?.socket;
+        if (recipientSocket) {
+          recipientSocket.emit("addFriend", userId);
+        }
+      });
+
+      socket.on("removeFriend", async (friendId) => {
+        const recipientSocket = socketInstances[friendId]?.socket;
+        if (recipientSocket) {
+          recipientSocket.emit("removeFriend", userId);
+        }
+      });
+
       socket.on("disconnect", async () => {
         await db("user").where("user_id", userId).update({ is_online: 0 });
-        onlineFriends.delete(userId);
 
-        const updatedOnlineFriendList = Array.from(onlineFriends.values());
+        delete socketInstances[userId];
+
+        const updatedOnlineFriendList = Object.values(socketInstances).map(
+          (instance) => instance.user
+        );
 
         socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
 
