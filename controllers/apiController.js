@@ -271,6 +271,7 @@ module.exports.fetchAllUserData = async (req, res) => {
     // extract users fav genre
     const query_user = await db("user")
       .select(
+        "user_id",
         "first_name",
         "last_name",
         "username",
@@ -291,11 +292,7 @@ module.exports.fetchAllUserData = async (req, res) => {
         "friend_list.status",
         "user.avatar_image"
       )
-      .where((builder) => {
-        builder
-          .where("friend_list.user_id", userId)
-          .orWhere("friend_list.friend", userId);
-      })
+      .where("friend_list.user_id", userId)
       .andWhere({ "friend_list.status": "accepted" });
 
     return res.json({ ...query_user, friends: query_friends });
@@ -398,6 +395,7 @@ module.exports.addUserBook = async (req, res) => {
     const userId = decoded.user_id;
 
     // get books info
+    console.log(req.body);
     if (
       (!req.body.book_name ||
         !req.body.book_description ||
@@ -687,16 +685,16 @@ module.exports.addFriend = async (req, res) => {
         .json({ error: "Friend does not exist inside the database" });
     }
 
+    await db("friend_list")
+      .where({ user_id: userId, friend: friendId, status: "rejected" })
+      .del();
+
     const friendAlreadyAdded = await db("friend_list")
       .where({ user_id: userId, friend: friendId })
       .first();
     if (friendAlreadyAdded) {
       return res.status(409).json({ error: "Friend already added" });
     }
-
-    await db("friend_list")
-      .where({ user_id: friendId, friend: userId, status: "rejected" })
-      .del();
 
     await db("friend_list").insert({
       user_id: userId,
@@ -756,7 +754,7 @@ module.exports.acceptFriendRequest = async (req, res) => {
     const userId = decoded.user_id;
 
     const friendId = req.body.friend;
-
+    console.log(req.body);
     if (!friendId) {
       return res
         .status(400)
@@ -783,6 +781,12 @@ module.exports.acceptFriendRequest = async (req, res) => {
     await db("friend_list")
       .where({ user_id: friendId, friend: userId, status: "pending" })
       .update({ status: "accepted" });
+
+      await db("friend_list")
+      .insert({ user_id: userId, friend: friendId, status: "accepted" });
+
+      await db("notifications")
+      .where({ recipient_id: userId, notification_type: "friendRequest/add"}).del();
 
     res.json({ message: "Friend request accepted successfully" });
   } catch (err) {
@@ -814,7 +818,7 @@ module.exports.rejectFriendRequest = async (req, res) => {
     }
 
     const friendOnAccepted = await db("friend_list")
-      .where({ user_id: friendId, friend: userId, status: "accepted" })
+      .where({ user_id: friendId, friend: userId, status: "pending" })
       .first();
 
     if (!friendOnAccepted) {
@@ -824,8 +828,14 @@ module.exports.rejectFriendRequest = async (req, res) => {
     }
 
     await db("friend_list")
-      .where({ user_id: friendId, friend: userId, status: "accepted" })
+      .where({ user_id: friendId, friend: userId, status: "pending" })
       .update({ status: "rejected" });
+
+      await db("friend_list")
+      .insert({ user_id: userId, friend: friendId, status: "rejected" });
+
+      await db("notifications")
+      .where({ recipient_id: userId, notification_type: "friendRequest/add"}).del();
 
     res.json({ message: "Friend request rejected successfully" });
   } catch (err) {

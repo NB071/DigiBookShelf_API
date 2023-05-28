@@ -54,12 +54,49 @@ module.exports.socketController = (io) => {
         socket.broadcast.emit("onlineUsers", updatedOnlineFriendList);
       });
 
-      socket.on("notifications", async (notification) => {
-        console.log(notification);
-        const recipientSocket =
-          socketInstances[notification.notificationTo.id]?.socket;
-        if (recipientSocket) {
-          recipientSocket.emit("notifications", notification);
+      socket.on("getNotifications", async () => {
+        try {
+          const userNotifications = await db("notifications")
+            .join("user", "notifications.sender_id", "=", "user.user_id")
+            .where({ recipient_id: userId })
+            .select(
+              "notifications.*",
+              "user.avatar_image AS sender_avatar",
+              "user.username AS sender_username"
+            )
+            .orderBy("notifications.created_at", "desc");
+          socket.emit("notifications", userNotifications);
+        } catch (error) {
+          console.log("error: ", error);
+        }
+      });
+
+      socket.on("sendNotification", async (notification) => {
+        try {
+          await db("notifications").insert({
+            recipient_id: notification.recipient_id,
+            notification_type: notification.notification_type,
+            sender_id: notification.sender_id,
+            message: notification.message,
+          });
+
+          const recipientSocket =
+            socketInstances[notification.recipient_id]?.socket;
+          if (recipientSocket) {
+            const userNotifications = await db("notifications")
+              .join("user", "notifications.sender_id", "=", "user.user_id")
+              .where({ recipient_id: notification.recipient_id })
+              .select(
+                "notifications.*",
+                "user.avatar_image AS sender_avatar",
+                "user.username AS sender_username"
+              )
+              .orderBy("notifications.created_at", "desc");
+
+            recipientSocket.emit("notifications", userNotifications);
+          }
+        } catch (error) {
+          console.log("error: ", error);
         }
       });
 
