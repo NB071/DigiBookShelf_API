@@ -506,42 +506,44 @@ module.exports.deleteUserBook = async (req, res) => {
   }
 };
 
-// USER: edit a book for shelf
-module.exports.editUserBook = async (req, res) => {
-  try {
-    const token = req.headers.authorization.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
-    const shelfId = decoded.shelf_id;
+// // USER: edit a book for shelf
 
-    // get books info
-    if (!req.body.book_id || Object.keys(req.body).length < 2) {
-      return res
-        .status(400)
-        .json({ error: "Enter book ID + the field to update" });
-    }
+// module.exports.editUserBook = async (req, res) => {
+//   try {
+//     const token = req.headers.authorization.split(" ")[1];
+//     const decoded = jwt.verify(token, process.env.JWT_SIGN_KEY);
+//     const shelfId = decoded.shelf_id;
 
-    const request = Object.keys(req.body)
-      .filter((item) => item !== "book_id")
-      .map((key) => ({ [key]: req.body[key] }));
+//     // get books info
+//     if (!req.body.book_id || Object.keys(req.body).length < 2) {
+//       return res
+//         .status(400)
+//         .json({ error: "Enter book ID + the field to update" });
+//     }
 
-    // edit the books based on the req body
-    const editdBook = await db("shelf")
-      .where({
-        shelf_id: shelfId,
-        book: req.body.book_id,
-      })
-      .update(Object.assign({}, ...request));
-    if (!editdBook) {
-      return res.status(400).json({ error: "wrong book ID or body request" });
-    }
-    res.json({ sucess: "book edited" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Try again later" });
-  }
-};
+//     const request = Object.keys(req.body)
+//       .filter((item) => item !== "book_id")
+//       .map((key) => ({ [key]: req.body[key] }));
+
+//     // edit the books based on the req body
+//     const editdBook = await db("shelf")
+//       .where({
+//         shelf_id: shelfId,
+//         book: req.body.book_id,
+//       })
+//       .update(Object.assign({}, ...request));
+//     if (!editdBook) {
+//       return res.status(400).json({ error: "wrong book ID or body request" });
+//     }
+//     res.json({ sucess: "book edited" });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ error: "Try again later" });
+//   }
+// };
 
 // USER: edit a book itself
+
 module.exports.editUserBookInfo = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -782,11 +784,15 @@ module.exports.acceptFriendRequest = async (req, res) => {
       .where({ user_id: friendId, friend: userId, status: "pending" })
       .update({ status: "accepted" });
 
-      await db("friend_list")
-      .insert({ user_id: userId, friend: friendId, status: "accepted" });
+    await db("friend_list").insert({
+      user_id: userId,
+      friend: friendId,
+      status: "accepted",
+    });
 
-      await db("notifications")
-      .where({ recipient_id: userId, notification_type: "friendRequest/add"}).del();
+    await db("notifications")
+      .where({ recipient_id: userId, notification_type: "friendRequest/add" })
+      .del();
 
     res.json({ message: "Friend request accepted successfully" });
   } catch (err) {
@@ -831,13 +837,45 @@ module.exports.rejectFriendRequest = async (req, res) => {
       .where({ user_id: friendId, friend: userId, status: "pending" })
       .update({ status: "rejected" });
 
-      await db("friend_list")
-      .insert({ user_id: userId, friend: friendId, status: "rejected" });
+    await db("friend_list").insert({
+      user_id: userId,
+      friend: friendId,
+      status: "rejected",
+    });
 
-      await db("notifications")
-      .where({ recipient_id: userId, notification_type: "friendRequest/add"}).del();
+    await db("notifications")
+      .where({ recipient_id: userId, notification_type: "friendRequest/add" })
+      .del();
 
     res.json({ message: "Friend request rejected successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Try again later" });
+  }
+};
+
+//USER: get single user
+module.exports.fetchSingleUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SIGN_KEY);
+
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: "no friend id" });
+    }
+
+    const friendExists = await db("user").where({ user_id: userId }).first();
+    if (!friendExists) {
+      return res
+        .status(404)
+        .json({ error: "user does not exist in the database" });
+    }
+
+    const friendInfo = await db("user").where({ user_id: userId }).first();
+
+    res.json(friendInfo);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });

@@ -52,11 +52,12 @@ router
 .get(authorize, apiController.fetchAllUserData)
 .patch(authorize, upload.single("avatar_image"), apiController.editUserData)
 
+router.get('/user/:userId', authorize, apiController.fetchSingleUser)
+
 router
 .route("/user/friends")
 .post(authorize, apiController.addFriend)
 .delete(authorize, apiController.removeFriend)
-
 router.post("/user/friends/accept", authorize, apiController.acceptFriendRequest);
 router.post("/user/friends/reject", authorize, apiController.rejectFriendRequest);
 
