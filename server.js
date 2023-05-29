@@ -7,7 +7,6 @@ const cors = require("cors");
 const http = require("http");
 const socketIO = require("socket.io");
 const app = express();
-const { SERVER_PORT } = process.env;
 const server = http.createServer(app);
 
 // for cron job 
@@ -46,6 +45,6 @@ app.use("/videos", videoRoute);
 socketController.socketController(io);
 
 // listener
-server.listen(PORT, function () {
+server.listen(process.env.SERVER_PORT, function () {
   console.log("🚀 Server is running on port: " + SERVER_PORT);
 });
