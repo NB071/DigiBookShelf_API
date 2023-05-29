@@ -345,7 +345,7 @@ module.exports.editUserData = async (req, res) => {
       .update(
         Object.assign({}, ...request, {
           avatar_image: req.file
-            ? `${process.env.SERVER_URL}:${process.env.PORT}/avatarImages/${req.file.filename}`
+            ? `${process.env.SERVER_URL}/avatarImages/${req.file.filename}`
             : undefined,
         })
       );
@@ -442,7 +442,7 @@ module.exports.addUserBook = async (req, res) => {
       total_pages,
       cover_image: `${
         req.file
-          ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
+          ? `${process.env.SERVER_URL}/bookCovers/${req.file.filename}`
           : cover_image
       }`,
       is_NYT_best_seller: req.body.is_NYT_best_seller ? 1 : 0,
@@ -601,7 +601,7 @@ module.exports.editUserBookInfo = async (req, res) => {
       .update(
         Object.assign({}, ...request, {
           cover_image: req.file
-            ? `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/${req.file.filename}`
+            ? `${process.env.SERVER_URL}/bookCovers/${req.file.filename}`
             : undefined,
         })
       );
