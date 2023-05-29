@@ -12,6 +12,11 @@
 
 <img src="https://i.ibb.co/smyJZY3/DBschema.png" alt="project-screenshot" width="400" height="400/">
 
+<h2>🕸️External API's :</h2>
+
+*   [NYT API](https://developer.nytimes.com/get-started) ## (API-KEY REQ.)
+*   [Pravatar](https://pravatar.cc) ## (API-KEY NOT REQ.)
+*   [GoogleBooks](https://www.googleapis.com/books/v1/) ## (API-KEY NOT REQ.)
   
   
 <h2>🧐 End-points:</h2>
