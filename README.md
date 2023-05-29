@@ -19,9 +19,9 @@
 *   [GoogleBooks](https://www.googleapis.com/books/v1/) ## (API-KEY NOT REQ.)
   
   
-<h2>🧐 End-points:</h2>
+<h2>👨‍💻 End-points:</h2>
 
-Here're some of the project's best features:
+Here's an overview of all end-points used in the API:
 
 *   GET     || /:videoName -> For login/sign-up short videos
 *   GET     || /api/verify -> For verification of JWT tokens
