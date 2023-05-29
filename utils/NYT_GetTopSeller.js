@@ -42,19 +42,7 @@ async function fetchWeeklyTopSellerNYT() {
     throw error;
   }
 }
-(async function () {
-  try {
-    const result = await fetchWeeklyTopSellerNYT();
-    
-    result.filter(book => {
-      
-    })
-    
 
-  } catch (error) {
-    console.error(error);
-  }
-})();
 module.exports = {
   fetchWeeklyTopSellerNYT,
 };

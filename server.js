@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const path = require("node:path");
+const cron = require('node-cron');
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -9,6 +10,21 @@ const app = express();
 const { PORT } = process.env;
 const server = http.createServer(app);
 
+// for cron job 
+const knexConfig = require("./knexfile");
+const { knex } = require("knex");
+const db = knex(knexConfig);
+
+cron.schedule('0 0 * * 0', async () => {
+  try {
+    await db.seed.run({ specific: '000_book_NYT_best_seller.js' });
+    console.log('Seed completed successfully');
+  } catch (error) {
+    console.error('Seed failed:', error);
+  }
+});
+
+// middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
