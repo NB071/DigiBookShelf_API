@@ -293,7 +293,8 @@ module.exports.fetchAllUserData = async (req, res) => {
         "user.avatar_image"
       )
       .where("friend_list.user_id", userId)
-      .andWhere({ "friend_list.status": "accepted" });
+      .andWhere({ "friend_list.status": "accepted" })
+      .orWhere({ "friend_list.status": "pending" });
 
     return res.json({ ...query_user, friends: query_friends });
   } catch (err) {
@@ -866,16 +867,34 @@ module.exports.fetchSingleUser = async (req, res) => {
       return res.status(400).json({ error: "no friend id" });
     }
 
-    const friendExists = await db("user").where({ user_id: userId }).first();
-    if (!friendExists) {
+    const userExists = await db("user").where({ user_id: userId }).first();
+    if (!userExists) {
       return res
         .status(404)
         .json({ error: "user does not exist in the database" });
     }
 
-    const friendInfo = await db("user").where({ user_id: userId }).first();
+    const userInfo = await db("user")
+      .where({ user_id: userId })
+      .select(
+        "user_id",
+        "shelf_id",
+        "first_name",
+        "last_name",
+        "last_name",
+        "username",
+        "email",
+        "avatar_image",
+        "goal_set",
+        "favorite_genre",
+        "is_online",
+        "joined_at"
+      )
+      .first();
 
-    res.json(friendInfo);
+        const userBooks = await db("shelf").where({user_id: userId})
+        console.log(userBooks);
+    res.json({...userInfo, userBooks});
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Try again later" });

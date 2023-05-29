@@ -18,7 +18,7 @@ async function fetchWeeklyTopSellerNYT() {
       );
 
       // Extract genre information from Google Books API response
-      const genre = googleBooksResponse.data.items[0].volumeInfo.categories[0];
+      const genre = googleBooksResponse.data.items?.[0].volumeInfo.categories?.[0] || "unknown";
 
       // Get total page count from Google Books API response
       const pageCount =

@@ -52,7 +52,6 @@ router
 .get(authorize, apiController.fetchAllUserData)
 .patch(authorize, upload.single("avatar_image"), apiController.editUserData)
 
-router.get('/user/:userId', authorize, apiController.fetchSingleUser)
 
 router
 .route("/user/friends")
@@ -69,11 +68,14 @@ router.patch(
   apiController.editUserBookInfo
   );
   
+  
   router
   .route("/user/books")
   .get(authorize, apiController.fetchShelfBook)
   .post(authorize, upload.single("cover_image"), apiController.addUserBook)
   .delete(authorize, apiController.deleteUserBook);
+  
+  router.get('/user/:userId', authorize, apiController.fetchSingleUser)
   
   router.get("/user/books/genres", authorize, apiController.userGenres);
   

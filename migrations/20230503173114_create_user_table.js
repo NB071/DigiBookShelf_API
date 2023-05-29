@@ -18,6 +18,7 @@ exports.up = function (knex) {
     table.integer("goal_set").nullable();
     table.string("favorite_genre").defaultTo("none").nullable();
     table.boolean("is_online").defaultTo(0).nullable();
+    table.timestamp("joined_at").defaultTo(knex.fn.now());
   });
 };
 
