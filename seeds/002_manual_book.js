@@ -20,7 +20,7 @@ exports.seed = async function (knex) {
       author: "Nima Bargestan",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-walton.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-walton.jpg`,
       purchase_link: "#",
     },
     {
@@ -40,7 +40,7 @@ exports.seed = async function (knex) {
       author: "Imran Bashir",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-mastering-blockchain.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-mastering-blockchain.jpg`,
       purchase_link:
         "https://www.amazon.ca/Mastering-Blockchain-distributed-consensus-cryptocurrencies/dp/1839213191",
     },
@@ -59,7 +59,7 @@ exports.seed = async function (knex) {
       author: "Jordan B. Peterson",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-12rules.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-12rules.jpg`,
       purchase_link:
         "https://www.amazon.ca/12-Rules-Life-Antidote-Chaos/dp/0345816021",
     },
@@ -76,7 +76,7 @@ exports.seed = async function (knex) {
       author: "Robert T. Kiyosaki",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-RichPoorDad.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-RichPoorDad.jpg`,
       purchase_link:
         "https://www.amazon.ca/Rich-Dad-Poor-Teach-Middle/dp/1612680194/ref=pd_bxgy_sccl_2/131-6268127-3218305?pd_rd_w=1tIaf&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=NHGX3ZJX56DVR1AGYWNS&pd_rd_wg=FoiB3&pd_rd_r=0a6360f2-b22d-4f1a-add8-3a44b477919a&pd_rd_i=1612680194&psc=1",
     },
@@ -94,7 +94,7 @@ exports.seed = async function (knex) {
       author: "Robert Greene",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-rules-power.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-rules-power.jpg`,
       purchase_link:
         "https://www.amazon.ca/48-Laws-Power-Robert-Greene/dp/0140280197/ref=pd_bxgy_sccl_1/131-6268127-3218305?pd_rd_w=aqonD&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=BX6SPKGGPHDV61333W8G&pd_rd_wg=u77Bp&pd_rd_r=12a302f6-63da-4246-9250-f7228eaf476a&pd_rd_i=0140280197&psc=1",
     },
@@ -114,7 +114,7 @@ exports.seed = async function (knex) {
       author: "James Clear",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Atomic-habit.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Atomic-habit.jpg`,
       purchase_link:
         "https://www.amazon.ca/Atomic-Habits-Proven-Build-Break/dp/0735211299/ref=pd_bxgy_sccl_2/131-6268127-3218305?pd_rd_w=aqonD&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=BX6SPKGGPHDV61333W8G&pd_rd_wg=u77Bp&pd_rd_r=12a302f6-63da-4246-9250-f7228eaf476a&pd_rd_i=0735211299&psc=1",
     },
@@ -130,7 +130,7 @@ exports.seed = async function (knex) {
       author: "Martin Fowler ",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Refactoring.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Refactoring.jpg`,
       purchase_link:
         "https://www.amazon.ca/Refactoring-Improving-Design-Existing-Code/dp/0134757599/ref=pd_rhf_d_ee_s_pd_sbs_rvi_sccl_1_8/131-6268127-3218305?pd_rd_w=PoKDH&content-id=amzn1.sym.c4b12d63-26ee-451b-a00e-167063525dc5&pf_rd_p=c4b12d63-26ee-451b-a00e-167063525dc5&pf_rd_r=G8Z5TZFXY0ZZBMB7CD63&pd_rd_wg=gVyuh&pd_rd_r=694d53c3-c53a-4348-8655-27d7bced9b6c&pd_rd_i=0134757599&psc=1",
     },
@@ -148,7 +148,7 @@ exports.seed = async function (knex) {
       author: "Morgan Housel",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-PsychMoney.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-PsychMoney.jpg`,
       purchase_link:
         "https://www.amazon.ca/Psychology-Money-Timeless-lessons-happiness/dp/0857197681/ref=pd_bxgy_img_sccl_2/131-6268127-3218305?pd_rd_w=S168y&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=M7SE139ECKJSFK1Z8Z72&pd_rd_wg=mP0Uk&pd_rd_r=e4a62572-4e27-47f5-833d-54a9a29b5b47&pd_rd_i=0857197681&psc=1",
     },
@@ -166,7 +166,7 @@ exports.seed = async function (knex) {
       author: "Martin Kleppmann",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-DesignData-Intensive-app.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-DesignData-Intensive-app.jpg`,
       purchase_link:
         "https://www.amazon.ca/Designing-Data-Intensive-Applications-Reliable-Maintainable/dp/1449373321/ref=pd_bxgy_img_sccl_2/131-6268127-3218305?pd_rd_w=M97QF&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=M7Y9KH04A98JWX8520HQ&pd_rd_wg=AD3k7&pd_rd_r=c77b60b3-15aa-4a50-ab75-089ad2c943bb&pd_rd_i=1449373321&psc=1",
     },
@@ -183,7 +183,7 @@ exports.seed = async function (knex) {
       author: "David Thomas",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-pragmatic.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-pragmatic.jpg`,
       purchase_link:
         "https://www.amazon.ca/Pragmatic-Programmer-journey-mastery-Anniversary/dp/0135957052/ref=pd_bxgy_img_sccl_1/131-6268127-3218305?pd_rd_w=pIQ1R&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=NYW0W46X8HW08ZQKXE4N&pd_rd_wg=uFYB1&pd_rd_r=2815ff4f-7af6-4ccc-b140-3b33312ccc80&pd_rd_i=0135957052&psc=1",
     },
@@ -199,7 +199,7 @@ exports.seed = async function (knex) {
       author: " Robert Martin",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-CleanCode.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-CleanCode.jpg`,
       purchase_link:
         "https://www.amazon.ca/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882/ref=pd_bxgy_img_sccl_1/131-6268127-3218305?pd_rd_w=1BJPe&content-id=amzn1.sym.93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_p=93ae3f3f-3555-4971-a952-df8053b1d375&pf_rd_r=MJ80CF5Z4F6880PDDTJE&pd_rd_wg=INofb&pd_rd_r=6feb9c4f-8408-431f-8739-06cfe54e56c5&pd_rd_i=0132350882&psc=1",
     },
@@ -215,7 +215,7 @@ exports.seed = async function (knex) {
       author: "Gayle Laakmann McDowell",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Cracking-Code-Interview.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Cracking-Code-Interview.jpg`,
       purchase_link:
         "https://www.amazon.ca/Cracking-Coding-Interview-Programming-Questions/dp/0984782850/ref=sr_1_1?crid=19HMEXPII0U4M&keywords=cracking+the+coding+interview&qid=1684375298&s=books&sprefix=coding+inter%2Cstripbooks%2C388&sr=1-1",
     },
@@ -231,7 +231,7 @@ exports.seed = async function (knex) {
       author: "Greg McKeown ",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Essentialism.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Essentialism.jpg`,
       purchase_link:
         "https://www.amazon.ca/Essentialism-Disciplined-Pursuit-Greg-McKeown/dp/0804137404/ref=sr_1_1?crid=2HTWGLQRE99CO&keywords=Essentialism&qid=1684375540&s=books&sprefix=essentialism%2Cstripbooks%2C105&sr=1-1",
     },
@@ -247,7 +247,7 @@ exports.seed = async function (knex) {
       author: "Benjamin Graham",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-intel-inverstor.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-intel-inverstor.jpg`,
       purchase_link:
         "https://www.amazon.ca/Intelligent-Investor-Definitive-Value-Investing/dp/0060555661/ref=sr_1_1?crid=DLVPG6JAFAX1&keywords=intel+investor&qid=1684375720&s=books&sprefix=intel+investor%2Cstripbooks%2C228&sr=1-1",
     },
@@ -264,7 +264,7 @@ exports.seed = async function (knex) {
       author: "Carly Schabowski",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-The-Rainbow.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-The-Rainbow.jpg`,
       purchase_link:
         "https://www.amazon.ca/Rainbow-Absolutely-heartbreaking-historical-fiction/dp/1800198108/ref=sr_1_1?crid=1I74UD8DS1S00&keywords=the+rainbow&qid=1684375877&s=books&sprefix=the+rainbow%2Cstripbooks%2C824&sr=1-1",
     },
@@ -280,7 +280,7 @@ exports.seed = async function (knex) {
       author: "Peter Thiel",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Zero-to-One.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Zero-to-One.jpg`,
       purchase_link:
         "https://www.amazon.ca/Zero-One-Notes-Startups-Future/dp/0804139296/ref=sr_1_1?crid=1T02A1LTRPPN5&keywords=Zero+to+one&qid=1684376081&s=books&sprefix=zero+to+one%2Cstripbooks%2C93&sr=1-1",
     },
@@ -297,7 +297,7 @@ exports.seed = async function (knex) {
       author: "Phil Knight",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-Shoedog.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-Shoedog.jpg`,
       purchase_link:
         "https://www.amazon.ca/Shoe-Dog-Memoir-Creator-Nike/dp/1501135929/ref=sr_1_1?crid=1QVD8RK90SUOU&keywords=shoe+dog+by+phil+knight&qid=1684376241&s=books&sprefix=Shoe+dog%2Cstripbooks%2C233&sr=1-1",
     },
@@ -313,7 +313,7 @@ exports.seed = async function (knex) {
       author: "Jeb Blount",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-SalesEQ.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-SalesEQ.jpg`,
       purchase_link:
         "https://www.amazon.ca/Sales-Performers-Sales-Specific-Emotional-Intelligence/dp/1119312574/ref=sr_1_1?crid=2U8L451DSYXF9&keywords=sales+EQ&qid=1684376368&s=books&sprefix=sales+eq%2Cstripbooks%2C108&sr=1-1",
     },
@@ -332,7 +332,7 @@ exports.seed = async function (knex) {
       author: "David Gourley",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-HTTP-Definitive.jpeg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-HTTP-Definitive.jpeg`,
       purchase_link:
         "https://www.amazon.ca/HTTP-Definitive-Guide-David-Gourley/dp/1565925092/ref=sr_1_1?crid=2F68G3Q94DKP9&keywords=HTTP+guide&qid=1684376613&s=books&sprefix=http+guide%2Cstripbooks%2C113&sr=1-1",
     },
@@ -348,7 +348,7 @@ exports.seed = async function (knex) {
       author: "Thomas H. Cormen",
       is_NYT_best_seller: 0,
       // Please change the IP address to match your localhost or private IP address.
-      cover_image: `${process.env.SERVER_URL}:${process.env.PORT}/bookCovers/bookCover_Seed-algorithms.jpg`,
+      cover_image: `${process.env.SERVER_URL}:${process.env.SERVER_PORT}/bookCovers/bookCover_Seed-algorithms.jpg`,
       purchase_link:
         "https://www.amazon.ca/Introduction-Algorithms-fourth-Thomas-Cormen/dp/026204630X/ref=sr_1_3?crid=1LHKUNK5F891B&keywords=Algorithms&qid=1684376924&s=books&sprefix=algorithms%2Cstripbooks%2C113&sr=1-3",
     },

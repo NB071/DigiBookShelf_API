@@ -7,7 +7,7 @@ const cors = require("cors");
 const http = require("http");
 const socketIO = require("socket.io");
 const app = express();
-const { PORT } = process.env;
+const { SERVER_PORT } = process.env;
 const server = http.createServer(app);
 
 // for cron job 
@@ -47,5 +47,5 @@ socketController.socketController(io);
 
 // listener
 server.listen(PORT, function () {
-  console.log("🚀 Server is running on port: " + PORT);
+  console.log("🚀 Server is running on port: " + SERVER_PORT);
 });
