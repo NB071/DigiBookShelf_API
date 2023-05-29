@@ -45,6 +45,6 @@ app.use("/videos", videoRoute);
 socketController.socketController(io);
 
 // listener
-server.listen(process.env.SERVER_PORT, function () {
-  console.log("🚀 Server is running on port: " + SERVER_PORT);
+server.listen(process.env.PORT, function () {
+  console.log("🚀 Server is running on port: " + process.env.PORT);
 });
