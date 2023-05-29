@@ -137,7 +137,7 @@ module.exports.register = async (req, res) => {
     res.send({ token });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: err });
   }
 };
 
